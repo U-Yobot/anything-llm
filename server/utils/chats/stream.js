@@ -160,10 +160,26 @@ async function streamChatWithWorkspace(
     return;
   }
 
+  // Check if vectorSearchResults has the expected format
+  if (
+    !vectorSearchResults.sources ||
+    !Array.isArray(vectorSearchResults.sources)
+  ) {
+    console.error(
+      "[StreamChat] Invalid vectorSearchResults format:",
+      vectorSearchResults
+    );
+    vectorSearchResults = {
+      contextTexts: [],
+      sources: [],
+      message: vectorSearchResults.error || "Vector search failed",
+    };
+  }
+
   const { fillSourceWindow } = require("../helpers/chat");
   const filledSources = fillSourceWindow({
     nDocs: workspace?.topN || 4,
-    searchResults: vectorSearchResults.sources,
+    searchResults: vectorSearchResults.sources || [],
     history: rawHistory,
     filterIdentifiers: pinnedDocIdentifiers,
   });
@@ -176,7 +192,7 @@ async function streamChatWithWorkspace(
   // and does not appear to the user that a new response used information that is otherwise irrelevant for a given prompt.
   // TLDR; reduces GitHub issues for "LLM citing document that has no answer in it" while keep answers highly accurate.
   contextTexts = [...contextTexts, ...filledSources.contextTexts];
-  sources = [...sources, ...vectorSearchResults.sources];
+  sources = [...sources, ...(vectorSearchResults.sources || [])];
 
   // If in query mode and no context chunks are found from search, backfill, or pins -  do not
   // let the LLM try to hallucinate a response or use general knowledge and exit early

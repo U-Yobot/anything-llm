@@ -691,7 +691,12 @@ const PGVector = {
         message: false,
       };
     } catch (err) {
-      return { error: err.message, success: false };
+      console.error("[PGVector] performSimilaritySearch error:", err.message);
+      return {
+        contextTexts: [],
+        sources: [],
+        message: err.message,
+      };
     } finally {
       if (connection) await connection.end();
     }
