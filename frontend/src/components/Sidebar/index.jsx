@@ -41,7 +41,7 @@ export default function Sidebar() {
               <img
                 src={logo}
                 alt="Logo"
-                className={`rounded max-h-[24px] object-contain transition-opacity duration-500 ${showSidebar ? "opacity-100" : "opacity-0"}`}
+                className={`rounded max-h-[35px] object-contain transition-opacity duration-500 ${showSidebar ? "opacity-100" : "opacity-0"}`}
               />
             </Link>
             {canToggleSidebar && (
@@ -108,19 +108,19 @@ export function SidebarMobileHeader() {
     <>
       <div
         aria-label="Show sidebar"
-        className="fixed top-0 left-0 right-0 z-10 flex justify-between items-center px-4 py-2 bg-theme-bg-sidebar light:bg-white text-slate-200 shadow-lg h-16"
+        className="fixed top-0 left-0 right-0 z-10 flex items-center justify-between h-16 px-4 py-2 shadow-lg bg-theme-bg-sidebar light:bg-white text-slate-200"
       >
         <button
           onClick={() => setShowSidebar(true)}
-          className="rounded-md p-2 flex items-center justify-center text-theme-text-secondary"
+          className="flex items-center justify-center p-2 rounded-md text-theme-text-secondary"
         >
-          <List className="h-6 w-6" />
+          <List className="w-6 h-6" />
         </button>
         <div className="flex items-center justify-center flex-grow">
           <img
             src={logo}
             alt="Logo"
-            className="block mx-auto h-6 w-auto"
+            className="block w-auto h-6 mx-auto"
             style={{ maxHeight: "40px", objectFit: "contain" }}
           />
         </div>
@@ -144,10 +144,10 @@ export function SidebarMobileHeader() {
           ref={sidebarRef}
           className="relative h-[100vh] fixed top-0 left-0  rounded-r-[26px] bg-theme-bg-sidebar w-[80%] p-[18px] "
         >
-          <div className="w-full h-full flex flex-col overflow-x-hidden items-between">
+          <div className="flex flex-col w-full h-full overflow-x-hidden items-between">
             {/* Header Information */}
-            <div className="flex w-full items-center justify-between gap-x-4">
-              <div className="flex shrink-1 w-fit items-center justify-start">
+            <div className="flex items-center justify-between w-full gap-x-4">
+              <div className="flex items-center justify-start shrink-1 w-fit">
                 <img
                   src={logo}
                   alt="Logo"
@@ -156,14 +156,14 @@ export function SidebarMobileHeader() {
                 />
               </div>
               {(!user || user?.role !== "default") && (
-                <div className="flex gap-x-2 items-center text-slate-500 shink-0">
+                <div className="flex items-center gap-x-2 text-slate-500 shink-0">
                   <SettingsButton />
                 </div>
               )}
             </div>
 
             {/* Primary Body */}
-            <div className="h-full flex flex-col w-full justify-between pt-4 ">
+            <div className="flex flex-col justify-between w-full h-full pt-4 ">
               <div className="h-auto md:sidebar-items">
                 <div className=" flex flex-col gap-y-4 overflow-y-scroll no-scroll pb-[60px]">
                   <NewWorkspaceButton
@@ -190,13 +190,13 @@ function NewWorkspaceButton({ user, showNewWsModal }) {
   if (!!user && user?.role === "default") return null;
 
   return (
-    <div className="flex gap-x-2 items-center justify-between">
+    <div className="flex items-center justify-between gap-x-2">
       <button
         onClick={showNewWsModal}
         className="flex flex-grow w-[75%] h-[44px] gap-x-2 py-[5px] px-4 bg-white rounded-lg text-sidebar justify-center items-center hover:bg-opacity-80 transition-all duration-300"
       >
-        <Plus className="h-5 w-5" />
-        <p className="text-sidebar text-sm font-semibold">
+        <Plus className="w-5 h-5" />
+        <p className="text-sm font-semibold text-sidebar">
           {t("new-workspace.title")}
         </p>
       </button>

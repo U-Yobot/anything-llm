@@ -48,18 +48,18 @@ export default function SettingsSidebar() {
   if (isMobile) {
     return (
       <>
-        <div className="fixed top-0 left-0 right-0 z-10 flex justify-between items-center px-4 py-2 bg-theme-bg-sidebar light:bg-white text-theme-text-secondary shadow-lg h-16">
+        <div className="fixed top-0 left-0 right-0 z-10 flex items-center justify-between h-16 px-4 py-2 shadow-lg bg-theme-bg-sidebar light:bg-white text-theme-text-secondary">
           <button
             onClick={() => setShowSidebar(true)}
-            className="rounded-md p-2 flex items-center justify-center text-theme-text-secondary"
+            className="flex items-center justify-center p-2 rounded-md text-theme-text-secondary"
           >
-            <List className="h-6 w-6" />
+            <List className="w-6 h-6" />
           </button>
           <div className="flex items-center justify-center flex-grow">
             <img
               src={logo}
               alt="Logo"
-              className="block mx-auto h-6 w-auto"
+              className="block w-auto h-6 mx-auto"
               style={{ maxHeight: "40px", objectFit: "contain" }}
             />
           </div>
@@ -83,10 +83,10 @@ export default function SettingsSidebar() {
             ref={sidebarRef}
             className="h-[100vh] fixed top-0 left-0 rounded-r-[26px] bg-theme-bg-sidebar w-[80%] p-[18px]"
           >
-            <div className="w-full h-full flex flex-col overflow-x-hidden items-between">
+            <div className="flex flex-col w-full h-full overflow-x-hidden items-between">
               {/* Header Information */}
-              <div className="flex w-full items-center justify-between gap-x-4">
-                <div className="flex shrink-1 w-fit items-center justify-start">
+              <div className="flex items-center justify-between w-full gap-x-4">
+                <div className="flex items-center justify-start shrink-1 w-fit">
                   <img
                     src={logo}
                     alt="Logo"
@@ -94,18 +94,18 @@ export default function SettingsSidebar() {
                     style={{ objectFit: "contain" }}
                   />
                 </div>
-                <div className="flex gap-x-2 items-center text-slate-500 shrink-0">
+                <div className="flex items-center gap-x-2 text-slate-500 shrink-0">
                   <a
                     href={paths.home()}
-                    className="transition-all duration-300 p-2 rounded-full text-white bg-theme-action-menu-bg hover:bg-theme-action-menu-item-hover hover:border-slate-100 hover:border-opacity-50 border-transparent border"
+                    className="p-2 text-white transition-all duration-300 border border-transparent rounded-full bg-theme-action-menu-bg hover:bg-theme-action-menu-item-hover hover:border-slate-100 hover:border-opacity-50"
                   >
-                    <House className="h-4 w-4" />
+                    <House className="w-4 h-4" />
                   </a>
                 </div>
               </div>
 
               {/* Primary Body */}
-              <div className="h-full flex flex-col w-full justify-between pt-4 overflow-y-scroll no-scroll">
+              <div className="flex flex-col justify-between w-full h-full pt-4 overflow-y-scroll no-scroll">
                 <div className="h-auto md:sidebar-items">
                   <div className="flex flex-col gap-y-4 pb-[60px] overflow-y-scroll no-scroll">
                     <SidebarOptions user={user} t={t} />
@@ -124,7 +124,7 @@ export default function SettingsSidebar() {
                   </div>
                 </div>
               </div>
-              <div className="absolute bottom-2 left-0 right-0 pt-2 bg-theme-bg-sidebar bg-opacity-80 backdrop-filter backdrop-blur-md">
+              <div className="absolute left-0 right-0 pt-2 bottom-2 bg-theme-bg-sidebar bg-opacity-80 backdrop-filter backdrop-blur-md">
                 <Footer />
               </div>
             </div>
@@ -139,12 +139,12 @@ export default function SettingsSidebar() {
       <div>
         <Link
           to={paths.home()}
-          className="flex shrink-0 max-w-[55%] items-center justify-start mx-[38px] my-[18px]"
+          className="flex shrink-0 items-center justify-start mx-[20px] my-[18px]"
         >
           <img
             src={logo}
             alt="Logo"
-            className="rounded max-h-[24px]"
+            className="rounded max-h-[35px]"
             style={{ objectFit: "contain" }}
           />
         </Link>
@@ -217,7 +217,7 @@ const SidebarOptions = ({ user = null, t }) => (
       <>
         <Option
           btnText={t("settings.ai-providers")}
-          icon={<Gear className="h-5 w-5 flex-shrink-0" />}
+          icon={<Gear className="flex-shrink-0 w-5 h-5" />}
           user={user}
           childOptions={[
             {
@@ -260,7 +260,7 @@ const SidebarOptions = ({ user = null, t }) => (
         />
         <Option
           btnText={t("settings.admin")}
-          icon={<UserCircleGear className="h-5 w-5 flex-shrink-0" />}
+          icon={<UserCircleGear className="flex-shrink-0 w-5 h-5" />}
           user={user}
           childOptions={[
             {
@@ -289,7 +289,7 @@ const SidebarOptions = ({ user = null, t }) => (
         />
         <Option
           btnText={t("settings.agent-skills")}
-          icon={<Robot className="h-5 w-5 flex-shrink-0" />}
+          icon={<Robot className="flex-shrink-0 w-5 h-5" />}
           href={paths.settings.agentSkills()}
           user={user}
           flex={true}
@@ -297,7 +297,7 @@ const SidebarOptions = ({ user = null, t }) => (
         />
         <Option
           btnText="Community Hub"
-          icon={<Globe className="h-5 w-5 flex-shrink-0" />}
+          icon={<Globe className="flex-shrink-0 w-5 h-5" />}
           childOptions={[
             {
               btnText: "Explore Trending",
@@ -321,7 +321,7 @@ const SidebarOptions = ({ user = null, t }) => (
         />
         <Option
           btnText={t("settings.customization")}
-          icon={<PencilSimpleLine className="h-5 w-5 flex-shrink-0" />}
+          icon={<PencilSimpleLine className="flex-shrink-0 w-5 h-5" />}
           user={user}
           childOptions={[
             {
@@ -346,7 +346,7 @@ const SidebarOptions = ({ user = null, t }) => (
         />
         <Option
           btnText={t("settings.tools")}
-          icon={<Toolbox className="h-5 w-5 flex-shrink-0" />}
+          icon={<Toolbox className="flex-shrink-0 w-5 h-5" />}
           user={user}
           childOptions={[
             {
@@ -384,7 +384,7 @@ const SidebarOptions = ({ user = null, t }) => (
         />
         <Option
           btnText={t("settings.security")}
-          icon={<Nut className="h-5 w-5 flex-shrink-0" />}
+          icon={<Nut className="flex-shrink-0 w-5 h-5" />}
           href={paths.settings.security()}
           user={user}
           flex={true}
@@ -394,7 +394,7 @@ const SidebarOptions = ({ user = null, t }) => (
         <HoldToReveal key="exp_features">
           <Option
             btnText={t("settings.experimental-features")}
-            icon={<Flask className="h-5 w-5 flex-shrink-0" />}
+            icon={<Flask className="flex-shrink-0 w-5 h-5" />}
             href={paths.settings.experimental()}
             user={user}
             flex={true}
@@ -463,7 +463,7 @@ function AppVersion() {
       to={`https://github.com/Mintplex-Labs/anything-llm/releases/tag/v${version}`}
       target="_blank"
       rel="noreferrer"
-      className="text-theme-text-secondary light:opacity-80 opacity-50 text-xs mx-3"
+      className="mx-3 text-xs opacity-50 text-theme-text-secondary light:opacity-80"
     >
       v{version}
     </Link>
