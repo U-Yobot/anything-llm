@@ -28,7 +28,7 @@ async function insertVectorExample() {
 
     // 3. 准备示例数据
     const namespace = "example-workspace"; // 工作空间标识
-    const dimensions = 384; // 向量维度（根据你的嵌入模型）
+    const dimensions = 1536; // 向量维度（根据你的嵌入模型）
 
     // 示例向量数据
     const submissions = [

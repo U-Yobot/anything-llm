@@ -13,7 +13,7 @@ const UserIcon = memo(({ role }) => {
         <img
           src={WorkspaceDefaultPfp}
           alt="system profile picture"
-          className="flex items-center justify-center rounded-full border-solid border border-white/40 light:border-theme-sidebar-border light:bg-theme-bg-chat-input"
+          className="flex items-center justify-center"
         />
       )}
     </div>
@@ -26,7 +26,7 @@ function RenderUserPfp({ pfp }) {
       <img
         src={UserDefaultPfp}
         alt="User profile picture"
-        className="rounded-full border-none"
+        className="border-none rounded-full"
       />
     );
 
@@ -34,7 +34,7 @@ function RenderUserPfp({ pfp }) {
     <img
       src={pfp}
       alt="User profile picture"
-      className="absolute top-0 left-0 w-full h-full object-cover rounded-full border-none"
+      className="absolute top-0 left-0 object-cover w-full h-full border-none rounded-full"
     />
   );
 }
