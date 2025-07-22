@@ -952,6 +952,8 @@ const TRANSLATIONS = {
     text_size: "Change text size.",
     microphone: "Speak your prompt.",
     send: "Send prompt message to workspace",
+    chat_mode_chat: "Chat",
+    chat_mode_agent: "Agent",
     tts_speak_message: "TTS Speak message",
     copy: "Copy",
     regenerate: "Regenerate",

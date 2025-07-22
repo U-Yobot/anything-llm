@@ -2,6 +2,14 @@ const path = require("path");
 const fs = require("fs");
 const LEGACY_MODEL_MAP = require("./legacy");
 
+// Local fallback config for when remote fetch fails
+let LOCAL_MODEL_CONFIG = null;
+try {
+  LOCAL_MODEL_CONFIG = require("../../../config/model_prices_and_context_window.json");
+} catch (error) {
+  // Config file doesn't exist or can't be loaded, that's OK
+}
+
 class ContextWindowFinder {
   static instance = null;
   static modelMap = LEGACY_MODEL_MAP;
@@ -43,7 +51,7 @@ class ContextWindowFinder {
       this.#pullRemoteModelMap();
   }
 
-  log(text, ...args) {
+  log (text, ...args) {
     console.log(`\x1b[33m[ContextWindowFinder]\x1b[0m ${text}`, ...args);
   }
 
@@ -51,7 +59,7 @@ class ContextWindowFinder {
    * Checks if the cache is stale by checking if the cache file exists and if the cache file is older than the expiry time.
    * @returns {boolean}
    */
-  get isCacheStale() {
+  get isCacheStale () {
     if (!fs.existsSync(this.cacheFileExpiryPath)) return true;
     const cachedAt = fs.readFileSync(this.cacheFileExpiryPath, "utf8");
     return Date.now() - cachedAt > ContextWindowFinder.expiryMs;
@@ -64,7 +72,7 @@ class ContextWindowFinder {
    * the model map only occurs on container start/system start.
    * @returns {Record<string, Record<string, number>> | null} - The cached model map
    */
-  get cachedModelMap() {
+  get cachedModelMap () {
     if (!fs.existsSync(this.cacheFilePath)) {
       this.log(`\x1b[33m
 --------------------------------
@@ -92,7 +100,7 @@ You can fix this by restarting AnythingLLM so the model map is re-pulled.
    * Pulls the remote model map from the remote URL, formats it and caches it.
    * @returns {Record<string, Record<string, number>>} - The formatted model map
    */
-  async #pullRemoteModelMap() {
+  async #pullRemoteModelMap () {
     try {
       this.log("Pulling remote model map...");
       const remoteContexWindowMap = await fetch(ContextWindowFinder.remoteUrl)
@@ -111,7 +119,21 @@ You can fix this by restarting AnythingLLM so the model map is re-pulled.
         })
         .catch((error) => {
           this.log("Error syncing remote model map", error);
-          return null;
+
+          // Fallback to local config file if remote fetch fails
+          if (LOCAL_MODEL_CONFIG) {
+            this.log("Falling back to local model map config file");
+            fs.writeFileSync(
+              this.cacheFilePath,
+              JSON.stringify(LOCAL_MODEL_CONFIG, null, 2)
+            );
+            fs.writeFileSync(this.cacheFileExpiryPath, Date.now().toString());
+            this.log("Local model map loaded and cached");
+            return LOCAL_MODEL_CONFIG;
+          } else {
+            this.log("Local model map config file not found");
+            return null;
+          }
         });
       if (!remoteContexWindowMap) return null;
 
@@ -126,7 +148,7 @@ You can fix this by restarting AnythingLLM so the model map is re-pulled.
     }
   }
 
-  #validateModelMap(modelMap = {}) {
+  #validateModelMap (modelMap = {}) {
     for (const [provider, models] of Object.entries(modelMap)) {
       // If the models is null/falsey or has no keys, throw an error
       if (typeof models !== "object")
@@ -152,7 +174,7 @@ You can fix this by restarting AnythingLLM so the model map is re-pulled.
    * @param {Record<string, any>} modelMap - The remote model map
    * @returns {Record<string, Record<string, number>>} - The formatted model map
    */
-  #formatModelMap(modelMap = {}) {
+  #formatModelMap (modelMap = {}) {
     const formattedModelMap = {};
 
     for (const [provider, liteLLMProviderTag] of Object.entries(
@@ -186,7 +208,7 @@ You can fix this by restarting AnythingLLM so the model map is re-pulled.
    * @param {string|null} model - The model to get the context window for
    * @returns {number|null} - The context window for the given provider and model
    */
-  get(provider = null, model = null) {
+  get (provider = null, model = null) {
     if (!provider || !this.cachedModelMap || !this.cachedModelMap[provider])
       return null;
     if (!model) return this.cachedModelMap[provider];

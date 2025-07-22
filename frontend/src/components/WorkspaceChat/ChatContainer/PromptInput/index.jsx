@@ -11,6 +11,7 @@ import AvailableAgentsButton, {
   useAvailableAgents,
 } from "./AgentMenu";
 import TextSizeButton from "./TextSizeMenu";
+import ChatModeSelector from "./ChatModeSelector";
 import LLMSelectorAction from "./LLMSelector/action";
 import SpeechToText from "./SpeechToText";
 import { Tooltip } from "react-tooltip";
@@ -58,8 +59,7 @@ export default function PromptInput({
   }
 
   useEffect(() => {
-    if (!!window)
-      window.addEventListener(PROMPT_INPUT_EVENT, handlePromptUpdate);
+    if (window) window.addEventListener(PROMPT_INPUT_EVENT, handlePromptUpdate);
     return () =>
       window?.removeEventListener(PROMPT_INPUT_EVENT, handlePromptUpdate);
   }, []);
@@ -238,8 +238,15 @@ export default function PromptInput({
     setPromptInput(e.target.value);
   }
 
+  // Auto-add @agent prefix if in agent mode and not already present
+  let finalMessage = promptInput;
+  const chatMode = localStorage.getItem("anythingllm_chat_mode");
+  if (chatMode === "agent" && !promptInput.trim().startsWith("@agent")) {
+    finalMessage = `@agent ${promptInput}`;
+  }
+
   return (
-    <div className="w-full fixed md:absolute bottom-0 left-0 z-10 md:z-0 flex justify-center items-center">
+    <div className="fixed bottom-0 left-0 z-10 flex items-center justify-center w-full md:absolute md:z-0">
       <SlashCommands
         showing={showSlashCommand}
         setShowing={setShowSlashCommand}
@@ -254,12 +261,12 @@ export default function PromptInput({
       />
       <form
         onSubmit={handleSubmit}
-        className="flex flex-col gap-y-1 rounded-t-lg md:w-3/4 w-full mx-auto max-w-xl items-center"
+        className="flex flex-col items-center w-full max-w-xl mx-auto rounded-t-lg gap-y-1 md:w-3/4"
       >
         <div className="flex items-center rounded-lg md:mb-4 md:w-full">
           <div className="w-[95vw] md:w-[635px] bg-theme-bg-chat-input light:bg-white light:border-solid light:border-[1px] light:border-theme-chat-input-border shadow-sm rounded-2xl flex flex-col px-2 overflow-hidden">
             <AttachmentManager attachments={attachments} />
-            <div className="flex items-center border-b border-theme-chat-input-border mx-3">
+            <div className="flex items-center mx-3 border-b border-theme-chat-input-border">
               <textarea
                 ref={textareaRef}
                 onChange={handleChange}
@@ -287,7 +294,7 @@ export default function PromptInput({
                     ref={formRef}
                     type="submit"
                     disabled={isDisabled}
-                    className="border-none inline-flex justify-center rounded-2xl cursor-pointer opacity-60 hover:opacity-100 light:opacity-100 light:hover:opacity-60 ml-4 disabled:cursor-not-allowed group"
+                    className="inline-flex justify-center ml-4 border-none cursor-pointer rounded-2xl opacity-60 hover:opacity-100 light:opacity-100 light:hover:opacity-60 disabled:cursor-not-allowed group"
                     data-tooltip-id="send-prompt"
                     data-tooltip-content={
                       isDisabled
@@ -325,6 +332,7 @@ export default function PromptInput({
                 />
                 <TextSizeButton />
                 <LLMSelectorAction />
+                <ChatModeSelector />
               </div>
               <div className="flex gap-x-2">
                 <SpeechToText sendCommand={sendCommand} />

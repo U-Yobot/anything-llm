@@ -1,13 +1,16 @@
 import { useState, useRef } from "react";
-import { TextT } from "@phosphor-icons/react";
+import { ChatCircle, Robot } from "@phosphor-icons/react";
 import { Tooltip } from "react-tooltip";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "@/hooks/useTheme";
 
-export default function TextSizeButton() {
+export default function ChatModeSelector() {
   const tooltipRef = useRef(null);
   const { t } = useTranslation();
   const { theme } = useTheme();
+  const [chatMode, setChatMode] = useState(
+    localStorage.getItem("anythingllm_chat_mode") || "chat"
+  );
 
   const toggleTooltip = () => {
     if (!tooltipRef.current) return;
@@ -16,16 +19,18 @@ export default function TextSizeButton() {
       : tooltipRef.current.open();
   };
 
+  const CurrentModeIcon = chatMode === "agent" ? Robot : ChatCircle;
+
   return (
     <>
       <div
-        id="text-size-btn"
-        data-tooltip-id="tooltip-text-size-btn"
-        aria-label={t("chat_window.text_size")}
+        id="chat-mode-btn"
+        data-tooltip-id="tooltip-chat-mode-btn"
+        aria-label={t("chat_window.chat_mode")}
         onClick={toggleTooltip}
         className="flex items-center justify-center border-none cursor-pointer opacity-60 hover:opacity-100 light:opacity-100 light:hover:opacity-60"
       >
-        <TextT
+        <CurrentModeIcon
           color="var(--theme-sidebar-footer-icon-fill)"
           weight="fill"
           className="w-[22px] h-[22px] pointer-events-none text-white"
@@ -33,7 +38,7 @@ export default function TextSizeButton() {
       </div>
       <Tooltip
         ref={tooltipRef}
-        id="tooltip-text-size-btn"
+        id="tooltip-chat-mode-btn"
         place="top"
         opacity={1}
         clickable={true}
@@ -46,22 +51,23 @@ export default function TextSizeButton() {
         }
         className="z-99 !w-[140px] !bg-theme-bg-primary !px-[5px] !rounded-lg !pointer-events-auto light:border-2 light:border-theme-modal-border"
       >
-        <TextSizeMenu tooltipRef={tooltipRef} />
+        <ChatModeMenu
+          tooltipRef={tooltipRef}
+          chatMode={chatMode}
+          setChatMode={setChatMode}
+        />
       </Tooltip>
     </>
   );
 }
 
-function TextSizeMenu({ tooltipRef }) {
+function ChatModeMenu({ tooltipRef, chatMode, setChatMode }) {
   const { t } = useTranslation();
-  const [selectedSize, setSelectedSize] = useState(
-    window.localStorage.getItem("anythingllm_text_size") || "normal"
-  );
 
-  const handleTextSizeChange = (size) => {
-    setSelectedSize(size);
-    window.localStorage.setItem("anythingllm_text_size", size);
-    window.dispatchEvent(new CustomEvent("textSizeChange", { detail: size }));
+  const handleModeChange = (mode) => {
+    setChatMode(mode);
+    localStorage.setItem("anythingllm_chat_mode", mode);
+    window.dispatchEvent(new CustomEvent("chatModeChange", { detail: mode }));
     tooltipRef.current?.close();
   };
 
@@ -70,50 +76,51 @@ function TextSizeMenu({ tooltipRef }) {
       <button
         onClick={(e) => {
           e.preventDefault();
-          handleTextSizeChange("small");
+          handleModeChange("chat");
         }}
-        className={`border-none w-full hover:cursor-pointer px-2 py-2 rounded-md flex items-center group ${
-          selectedSize === "small"
+        className={`border-none w-full hover:cursor-pointer px-2 py-2 rounded-md flex items-center gap-2 group ${
+          chatMode === "chat"
             ? "bg-theme-action-menu-item-hover"
             : "hover:bg-theme-action-menu-item-hover"
         }`}
       >
-        <div className="text-xs text-theme-text-primary">
-          {t("chat_window.small")}
-        </div>
-      </button>
-
-      <button
-        onClick={(e) => {
-          e.preventDefault();
-          handleTextSizeChange("normal");
-        }}
-        className={`border-none w-full hover:cursor-pointer px-2 py-2 rounded-md flex items-center group ${
-          selectedSize === "normal"
-            ? "bg-theme-action-menu-item-hover"
-            : "hover:bg-theme-action-menu-item-hover"
-        }`}
-      >
+        <ChatCircle
+          color="var(--theme-sidebar-footer-icon-fill)"
+          weight="fill"
+          className="w-[16px] h-[16px]"
+        />
         <div className="text-sm text-theme-text-primary">
-          {t("chat_window.normal")}
+          {t("chat_window.chat_mode_chat")}
         </div>
       </button>
 
       <button
         onClick={(e) => {
           e.preventDefault();
-          handleTextSizeChange("large");
+          handleModeChange("agent");
         }}
-        className={`border-none w-full hover:cursor-pointer px-2 py-2 rounded-md flex items-center group ${
-          selectedSize === "large"
+        className={`border-none w-full hover:cursor-pointer px-2 py-2 rounded-md flex items-center gap-2 group ${
+          chatMode === "agent"
             ? "bg-theme-action-menu-item-hover"
             : "hover:bg-theme-action-menu-item-hover"
         }`}
       >
-        <div className="text-theme-text-primary text-[16px]">
-          {t("chat_window.large")}
+        <Robot
+          color="var(--theme-sidebar-footer-icon-fill)"
+          weight="fill"
+          className="w-[16px] h-[16px]"
+        />
+        <div className="text-sm text-theme-text-primary">
+          {t("chat_window.chat_mode_agent")}
         </div>
       </button>
     </div>
   );
+}
+
+export function useChatMode() {
+  const [chatMode, setChatMode] = useState(
+    localStorage.getItem("anythingllm_chat_mode") || "chat"
+  );
+  return { chatMode, setChatMode };
 }

@@ -849,6 +849,8 @@ const TRANSLATIONS = {
     text_size: "更改文字大小。",
     microphone: "语音输入你的提示。",
     send: "将提示消息发送到工作区",
+    chat_mode_chat: "聊天模式",
+    chat_mode_agent: "代理模式",
     attachments_processing: "附件正在处理，请稍候……",
     tts_speak_message: "TTS 播报消息",
     copy: "复制",
