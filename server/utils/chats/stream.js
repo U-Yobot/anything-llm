@@ -14,7 +14,7 @@ const {
 
 const VALID_CHAT_MODE = ["chat", "query"];
 
-async function streamChatWithWorkspace(
+async function streamChatWithWorkspace (
   response,
   workspace,
   message,
@@ -24,7 +24,25 @@ async function streamChatWithWorkspace(
   attachments = []
 ) {
   const uuid = uuidv4();
+
+  // 🔍 DEBUG: 输出收到的消息和处理过程
+  console.log(
+    `\x1b[32m[DEBUG-STREAM]\x1b[0m streamChatWithWorkspace 开始处理:`,
+    {
+      originalMessage: message,
+      chatMode: chatMode,
+      workspace: workspace?.slug,
+    }
+  );
+
   const updatedMessage = await grepCommand(message, user);
+
+  // 🔍 DEBUG: 输出命令处理后的消息
+  console.log(`\x1b[32m[DEBUG-STREAM]\x1b[0m grepCommand 处理后:`, {
+    originalMessage: message,
+    updatedMessage: updatedMessage,
+    isValidCommand: Object.keys(VALID_COMMANDS).includes(updatedMessage),
+  });
 
   if (Object.keys(VALID_COMMANDS).includes(updatedMessage)) {
     const data = await VALID_COMMANDS[updatedMessage](
@@ -133,22 +151,22 @@ async function streamChatWithWorkspace(
   const vectorSearchResults =
     embeddingsCount !== 0
       ? await VectorDb.performSimilaritySearch({
-          namespace: workspace.slug,
-          input: updatedMessage,
-          LLMConnector,
-          similarityThreshold: workspace?.similarityThreshold,
-          topN: workspace?.topN,
-          filterIdentifiers: pinnedDocIdentifiers,
-          rerank: workspace?.vectorSearchMode === "rerank",
-        })
+        namespace: workspace.slug,
+        input: updatedMessage,
+        LLMConnector,
+        similarityThreshold: workspace?.similarityThreshold,
+        topN: workspace?.topN,
+        filterIdentifiers: pinnedDocIdentifiers,
+        rerank: workspace?.vectorSearchMode === "rerank",
+      })
       : {
-          contextTexts: [],
-          sources: [],
-          message: null,
-        };
+        contextTexts: [],
+        sources: [],
+        message: null,
+      };
 
   // Failed similarity search if it was run at all and failed.
-  if (!!vectorSearchResults.message) {
+  if (vectorSearchResults.message) {
     writeResponseChunk(response, {
       id: uuid,
       type: "abort",

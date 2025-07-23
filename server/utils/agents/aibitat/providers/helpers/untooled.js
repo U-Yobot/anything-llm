@@ -8,7 +8,7 @@ class UnTooled {
     this.deduplicator = new Deduplicator();
   }
 
-  cleanMsgs(messages) {
+  cleanMsgs (messages) {
     const modifiedMessages = [];
     messages.forEach((msg) => {
       if (msg.role === "function") {
@@ -22,7 +22,7 @@ class UnTooled {
     return modifiedMessages;
   }
 
-  showcaseFunctions(functions = []) {
+  showcaseFunctions (functions = []) {
     let output = "";
     functions.forEach((def) => {
       let shotExample = `-----------
@@ -52,8 +52,8 @@ ${JSON.stringify(def.parameters.properties, null, 4)}\n`;
    * @param {boolean} [opts.enforceOrder] - By default (false), the order of the values in the arrays doesn't matter.
    * @return {boolean}
    */
-  compareArrays(arr1, arr2, opts) {
-    function vKey(i, v) {
+  compareArrays (arr1, arr2, opts) {
+    function vKey (i, v) {
       return (opts?.enforceOrder ? `${i}-` : "") + `${typeof v}-${v}`;
     }
 
@@ -79,7 +79,7 @@ ${JSON.stringify(def.parameters.properties, null, 4)}\n`;
     return true;
   }
 
-  validFuncCall(functionCall = {}, functions = []) {
+  validFuncCall (functionCall = {}, functions = []) {
     if (
       !functionCall ||
       !functionCall?.hasOwnProperty("name") ||
@@ -105,7 +105,7 @@ ${JSON.stringify(def.parameters.properties, null, 4)}\n`;
     return { valid: true, reason: null };
   }
 
-  async functionCall(messages, functions, chatCb = null) {
+  async functionCall (messages, functions, chatCb = null) {
     const history = [...messages].filter((msg) =>
       ["user", "assistant"].includes(msg.role)
     );
@@ -133,6 +133,7 @@ ${JSON.stringify(def.parameters.properties, null, 4)}\n`;
         ...history,
       ],
     });
+    console.log("MCP Agent Call: ", response);
     const call = safeJsonParse(response, null);
     if (call === null) return { toolCall: null, text: response }; // failed to parse, so must be text.
 

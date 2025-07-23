@@ -12,6 +12,13 @@ export default function ChatModeSelector() {
     localStorage.getItem("anythingllm_chat_mode") || "chat"
   );
 
+  // 🔍 DEBUG: 组件初始化调试
+  console.log(`🔍 [CHAT-MODE-INIT] ChatModeSelector 初始化:`, {
+    localStorageValue: localStorage.getItem("anythingllm_chat_mode"),
+    initialChatMode: chatMode,
+    fallbackToChat: !localStorage.getItem("anythingllm_chat_mode"),
+  });
+
   const toggleTooltip = () => {
     if (!tooltipRef.current) return;
     tooltipRef.current.isOpen
@@ -20,6 +27,13 @@ export default function ChatModeSelector() {
   };
 
   const CurrentModeIcon = chatMode === "agent" ? Robot : ChatCircle;
+
+  // 🔍 DEBUG: 每次渲染都输出当前状态
+  console.log(`🔍 [CHAT-MODE-RENDER] 当前渲染状态:`, {
+    chatMode: chatMode,
+    localStorage: localStorage.getItem("anythingllm_chat_mode"),
+    CurrentModeIcon: chatMode === "agent" ? "Robot" : "ChatCircle",
+  });
 
   return (
     <>
@@ -64,12 +78,20 @@ export default function ChatModeSelector() {
 function ChatModeMenu({ tooltipRef, chatMode, setChatMode }) {
   const { t } = useTranslation();
 
-  const handleModeChange = (mode) => {
+  function handleModeChange(mode) {
     setChatMode(mode);
     localStorage.setItem("anythingllm_chat_mode", mode);
+
+    // 🔍 DEBUG: 模式切换调试
+    console.log(`🔍 [CHAT-MODE-DEBUG] 模式切换:`, {
+      newMode: mode,
+      savedToLocalStorage: localStorage.getItem("anythingllm_chat_mode"),
+      chatModeState: mode,
+    });
+
     window.dispatchEvent(new CustomEvent("chatModeChange", { detail: mode }));
     tooltipRef.current?.close();
-  };
+  }
 
   return (
     <div className="flex flex-col items-stretch justify-start gap-1 p-2">

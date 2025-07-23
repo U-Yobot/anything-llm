@@ -17,8 +17,8 @@ import DnDFileUploaderWrapper from "./DnDWrapper";
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
-import { ChatTooltips } from "./ChatTooltips";
 import { MetricsProvider } from "./ChatHistory/HistoricalMessage/Actions/RenderMetrics";
+import { ChatTooltips } from "./ChatTooltips";
 
 export default function ChatContainer({ workspace, knownHistory = [] }) {
   const { threadSlug = null } = useParams();
@@ -50,10 +50,37 @@ export default function ChatContainer({ workspace, knownHistory = [] }) {
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!message || message === "") return false;
+
+    console.log("message", message);
+
+    // 检查是否是 agent 模式，如果是则自动添加 @agent 前缀
+    const chatMode = localStorage.getItem("anythingllm_chat_mode");
+    let finalMessage = message;
+
+    if (
+      chatMode === "agent" &&
+      !message.trim().startsWith("@agent") &&
+      !message.trim().startsWith("/")
+    ) {
+      finalMessage = `@agent ${message}`;
+      console.log(`🔍 [CHAT-CONTAINER] Agent模式，添加前缀:`, {
+        originalMessage: message,
+        finalMessage: finalMessage,
+      });
+    }
+
+    // 🔍 DEBUG: 输出当前message状态
+    console.log(`🔍 [CHAT-CONTAINER] handleSubmit 收到消息:`, {
+      message: message,
+      finalMessage: finalMessage,
+      messageType: typeof finalMessage,
+      startsWithAgent: finalMessage.startsWith("@agent"),
+    });
+
     const prevChatHistory = [
       ...chatHistory,
       {
-        content: message,
+        content: message, // 显示用原始消息
         role: "user",
         attachments: parseAttachments(),
       },
@@ -61,7 +88,7 @@ export default function ChatContainer({ workspace, knownHistory = [] }) {
         content: "",
         role: "assistant",
         pending: true,
-        userMessage: message,
+        userMessage: finalMessage, // 发送用带前缀的消息
         animate: true,
       },
     ];
@@ -160,7 +187,7 @@ export default function ChatContainer({ workspace, knownHistory = [] }) {
       var _chatHistory = [...remHistory];
 
       // Override hook for new messages to now go to agents until the connection closes
-      if (!!websocket) {
+      if (websocket) {
         if (!promptMessage || !promptMessage?.userMessage) return false;
         window.dispatchEvent(new CustomEvent(CLEAR_ATTACHMENTS_EVENT));
         websocket.send(

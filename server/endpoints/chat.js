@@ -18,7 +18,7 @@ const { User } = require("../models/user");
 const truncate = require("truncate");
 const { getModelTag } = require("./utils");
 
-function chatEndpoints(app) {
+function chatEndpoints (app) {
   if (!app) return;
 
   app.post(
@@ -29,6 +29,14 @@ function chatEndpoints(app) {
         const user = await userFromSession(request, response);
         const { message, attachments = [] } = reqBody(request);
         const workspace = response.locals.workspace;
+
+        // 🔍 DEBUG: 输出收到的原始消息
+        console.log(`\x1b[33m[DEBUG-CHAT]\x1b[0m 收到前端消息:`, {
+          message: message,
+          messageLength: message?.length,
+          startsWithAgent: message?.startsWith("@agent"),
+          workspace: workspace?.slug,
+        });
 
         if (!message?.length) {
           response.status(400).json({

@@ -4,7 +4,7 @@ const {
 } = require("../../models/workspaceAgentInvocation");
 const { writeResponseChunk } = require("../helpers/chat/responses");
 
-async function grepAgents({
+async function grepAgents ({
   uuid,
   response,
   message,
@@ -12,7 +12,23 @@ async function grepAgents({
   user = null,
   thread = null,
 }) {
+  // 🔍 DEBUG: 输出agent检测过程
+  console.log(`\x1b[35m[DEBUG-AGENTS]\x1b[0m grepAgents 开始检测:`, {
+    message: message,
+    messageType: typeof message,
+    startsWithAgent: message?.startsWith?.("@agent"),
+    includesAgent: message?.includes?.("@agent"),
+  });
+
   const agentHandles = WorkspaceAgentInvocation.parseAgents(message);
+
+  // 🔍 DEBUG: 输出解析结果
+  console.log(`\x1b[35m[DEBUG-AGENTS]\x1b[0m parseAgents 解析结果:`, {
+    agentHandles: agentHandles,
+    agentHandlesLength: agentHandles.length,
+    isAgentChat: agentHandles.length > 0,
+  });
+
   if (agentHandles.length > 0) {
     const { invocation: newInvocation } = await WorkspaceAgentInvocation.new({
       prompt: message,

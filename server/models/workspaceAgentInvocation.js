@@ -5,8 +5,25 @@ const WorkspaceAgentInvocation = {
   // returns array of strings with their @ handle.
   // must start with @agent for now.
   parseAgents: function (promptString) {
-    if (!promptString.startsWith("@agent")) return [];
-    return promptString.split(/\s+/).filter((v) => v.startsWith("@"));
+    // 🔍 DEBUG: 输出详细的解析过程
+    console.log(`\x1b[36m[DEBUG-PARSE]\x1b[0m parseAgents 详细检测:`, {
+      promptString: promptString,
+      type: typeof promptString,
+      length: promptString?.length,
+      startsWithAgent: promptString?.startsWith?.("@agent"),
+      firstChar: promptString?.[0],
+      firstWord: promptString?.split?.(/\s+/)?.[0],
+      trimmedStartsWithAgent: promptString?.trim?.()?.startsWith?.("@agent"),
+    });
+
+    if (!promptString.startsWith("@agent")) {
+      console.log(`\x1b[36m[DEBUG-PARSE]\x1b[0m 不以@agent开头，返回空数组`);
+      return [];
+    }
+
+    const result = promptString.split(/\s+/).filter((v) => v.startsWith("@"));
+    console.log(`\x1b[36m[DEBUG-PARSE]\x1b[0m 解析结果:`, result);
+    return result;
   },
 
   close: async function (uuid) {
@@ -16,7 +33,7 @@ const WorkspaceAgentInvocation = {
         where: { uuid: String(uuid) },
         data: { closed: true },
       });
-    } catch {}
+    } catch { }
   },
 
   new: async function ({ prompt, workspace, user = null, thread = null }) {

@@ -85,7 +85,23 @@ export default function PromptInput({
   const debouncedSaveState = debounce(saveCurrentState, 250);
 
   function handleSubmit(e) {
+    e.preventDefault();
     setFocused(false);
+
+    // 检查是否是 agent 模式，如果是则自动添加 @agent 前缀
+    const chatMode = localStorage.getItem("anythingllm_chat_mode");
+
+    // 🔍 DEBUG: 详细的localStorage检查
+    console.log(`🔍 [FRONTEND-DEBUG] localStorage 详细检查:`, {
+      rawValue: localStorage.getItem("anythingllm_chat_mode"),
+      chatMode: chatMode,
+      typeOf: typeof chatMode,
+      isAgent: chatMode === "agent",
+      isChat: chatMode === "chat",
+      promptInput: promptInput,
+    });
+
+    // 直接提交，让ChatContainer处理agent前缀逻辑
     submit(e);
   }
 
@@ -236,13 +252,6 @@ export default function PromptInput({
     watchForAt(e);
     adjustTextArea(e);
     setPromptInput(e.target.value);
-  }
-
-  // Auto-add @agent prefix if in agent mode and not already present
-  let finalMessage = promptInput;
-  const chatMode = localStorage.getItem("anythingllm_chat_mode");
-  if (chatMode === "agent" && !promptInput.trim().startsWith("@agent")) {
-    finalMessage = `@agent ${promptInput}`;
   }
 
   return (
