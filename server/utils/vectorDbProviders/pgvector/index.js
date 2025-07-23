@@ -370,7 +370,7 @@ const PGVector = {
     connection,
     submissions,
     namespace,
-    dimensions = 1536,
+    dimensions = 768,
   }) {
     await this.createTableIfNotExists(connection, dimensions);
     this.log(`Updating or creating collection ${namespace}`);
@@ -403,7 +403,7 @@ const PGVector = {
    * @param {number} dimensions
    * @returns
    */
-  createTableIfNotExists: async function (connection, dimensions = 1536) {
+  createTableIfNotExists: async function (connection, dimensions = 768) {
     this.log(`Creating embedding table with ${dimensions} dimensions`);
     await connection.query(this.createTableSql(dimensions));
     return true;

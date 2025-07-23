@@ -68,9 +68,23 @@ async function streamChatWithWorkspace (
   if (isAgentChat) return;
 
   const LLMConnector = getLLMProvider({
-    provider: workspace?.chatProvider,
-    model: workspace?.chatModel,
+    provider: workspace?.chatProvider, // e.g., 'ollama'
+    model: workspace?.chatModel, // e.g., 'llama3' or 'mistral'
   });
+
+  // 🔍 DEBUG: 显示工作区 LLM 配置
+  console.log(`\x1b[34m[DEBUG-WORKSPACE-LLM]\x1b[0m 工作区 LLM 配置:`, {
+    workspaceSlug: workspace?.slug,
+    chatProvider: workspace?.chatProvider,
+    chatModel: workspace?.chatModel,
+    agentProvider: workspace?.agentProvider,
+    agentModel: workspace?.agentModel,
+    openAiTemp: workspace?.openAiTemp,
+    LLMConnectorConstructorName: LLMConnector.constructor.name,
+    LLMConnectorModel: LLMConnector.model,
+    LLMConnectorDefaultTemp: LLMConnector.defaultTemp,
+  });
+
   const VectorDb = getVectorDbClass();
 
   const messageLimit = workspace?.openAiHistory || 20;

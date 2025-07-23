@@ -14,7 +14,7 @@ class MCPCompatibilityLayer extends MCPHypervisor {
    * This will also boot all MCP servers if they have not been started yet.
    * @returns {Promise<string[]>} Array of flow names in @@mcp_{name} format
    */
-  async activeMCPServers() {
+  async activeMCPServers () {
     await this.bootMCPServers();
     return Object.keys(this.mcps).flatMap((name) => `@@mcp_${name}`);
   }
@@ -25,12 +25,23 @@ class MCPCompatibilityLayer extends MCPHypervisor {
    * @param {Object} aibitat - The aibitat object to pass to the plugin
    * @returns {Promise<{name: string, description: string, plugin: Function}[]|null>} Array of plugin configurations or null if not found
    */
-  async convertServerToolsToPlugins(name, _aibitat = null) {
+  async convertServerToolsToPlugins (name, _aibitat = null) {
     const mcp = this.mcps[name];
     if (!mcp) return null;
 
     const tools = (await mcp.listTools()).tools;
     if (!tools.length) return null;
+
+    // 🔍 DEBUG: 输出MCP工具信息
+    console.log(`\x1b[34m[DEBUG-MCP-TOOLS]\x1b[0m MCP服务器 ${name} 的工具:`, {
+      serverName: name,
+      toolCount: tools.length,
+      tools: tools.map((tool) => ({
+        name: tool.name,
+        description: tool.description,
+        inputSchema: tool.inputSchema,
+      })),
+    });
 
     const plugins = [];
     for (const tool of tools) {
@@ -108,7 +119,7 @@ class MCPCompatibilityLayer extends MCPHypervisor {
    *   error: string|null
    * }[]>} - The active MCP servers
    */
-  async servers() {
+  async servers () {
     await this.bootMCPServers();
     const servers = [];
     for (const [name, result] of Object.entries(this.mcpLoadingResults)) {
@@ -154,7 +165,7 @@ class MCPCompatibilityLayer extends MCPHypervisor {
    * @param {string} name - The name of the MCP server to toggle
    * @returns {Promise<{success: boolean, error: string | null}>}
    */
-  async toggleServerStatus(name) {
+  async toggleServerStatus (name) {
     const server = this.mcpServerConfigs.find((s) => s.name === name);
     if (!server)
       return {
@@ -162,7 +173,7 @@ class MCPCompatibilityLayer extends MCPHypervisor {
         error: `MCP server ${name} not found in config file.`,
       };
     const mcp = this.mcps[name];
-    const online = !!mcp ? !!(await mcp.ping()) : false; // If the server is not in the mcps object, it is not running
+    const online = mcp ? !!(await mcp.ping()) : false; // If the server is not in the mcps object, it is not running
 
     if (online) {
       const killed = this.pruneMCPServer(name);
@@ -181,7 +192,7 @@ class MCPCompatibilityLayer extends MCPHypervisor {
    * @param {string} name - The name of the MCP server to delete
    * @returns {Promise<{success: boolean, error: string | null}>}
    */
-  async deleteServer(name) {
+  async deleteServer (name) {
     const server = this.mcpServerConfigs.find((s) => s.name === name);
     if (!server)
       return {
@@ -190,7 +201,7 @@ class MCPCompatibilityLayer extends MCPHypervisor {
       };
 
     const mcp = this.mcps[name];
-    const online = !!mcp ? !!(await mcp.ping()) : false; // If the server is not in the mcps object, it is not running
+    const online = mcp ? !!(await mcp.ping()) : false; // If the server is not in the mcps object, it is not running
     if (online) this.pruneMCPServer(name);
     this.removeMCPServerFromConfig(name);
 

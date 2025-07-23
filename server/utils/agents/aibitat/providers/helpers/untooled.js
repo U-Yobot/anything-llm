@@ -82,8 +82,8 @@ ${JSON.stringify(def.parameters.properties, null, 4)}\n`;
   validFuncCall (functionCall = {}, functions = []) {
     if (
       !functionCall ||
-      !functionCall?.hasOwnProperty("name") ||
-      !functionCall?.hasOwnProperty("arguments")
+      !Object.prototype.hasOwnProperty.call(functionCall, "name") ||
+      !Object.prototype.hasOwnProperty.call(functionCall, "arguments")
     ) {
       return {
         valid: false,
@@ -96,10 +96,42 @@ ${JSON.stringify(def.parameters.properties, null, 4)}\n`;
       return { valid: false, reason: "Function name does not exist." };
     }
 
-    const props = Object.keys(foundFunc.parameters.properties);
+    const props = Object.keys(foundFunc.parameters.properties || {});
     const fProps = Object.keys(functionCall.arguments);
-    if (!this.compareArrays(props, fProps)) {
-      return { valid: false, reason: "Invalid argument schema match." };
+    const required = foundFunc.parameters.required || [];
+
+    // 🔍 DEBUG: 输出参数比较信息
+    console.log(`\x1b[33m[DEBUG-FUNC-VALIDATION]\x1b[0m 函数参数验证:`, {
+      functionName: functionCall.name,
+      expectedProps: props,
+      actualProps: fProps,
+      requiredProps: required,
+      functionParameters: foundFunc.parameters,
+      functionArguments: functionCall.arguments,
+    });
+
+    // 检查所有必需的参数是否都存在
+    const missingRequired = required.filter((param) => !fProps.includes(param));
+    if (missingRequired.length > 0) {
+      console.log(`\x1b[31m[DEBUG-FUNC-VALIDATION]\x1b[0m 缺少必需参数:`, {
+        missing: missingRequired,
+        provided: fProps,
+        required: required,
+      });
+      return {
+        valid: false,
+        reason: `Missing required parameters: ${missingRequired.join(", ")}`,
+      };
+    }
+
+    // 检查是否有未定义的参数（警告但不阻止）
+    const extraProps = fProps.filter((prop) => !props.includes(prop));
+    if (extraProps.length > 0) {
+      console.log(`\x1b[33m[DEBUG-FUNC-VALIDATION]\x1b[0m 额外参数 (警告):`, {
+        extra: extraProps,
+        defined: props,
+      });
+      // 不返回错误，只是警告
     }
 
     return { valid: true, reason: null };

@@ -27,11 +27,35 @@ class OllamaProvider extends InheritMultiple([Provider, UnTooled]) {
     this.verbose = true;
   }
 
-  get client() {
+  get client () {
     return this._client;
   }
 
-  async #handleFunctionCallChat({ messages = [] }) {
+  async #handleFunctionCallChat ({ messages = [] }) {
+    // 🔍 DEBUG: 显示发送给 Ollama 的实际消息
+    console.log(`\x1b[36m[DEBUG-OLLAMA-AGENT]\x1b[0m 发送给 Ollama 的消息:`, {
+      model: this.model,
+      messageCount: messages.length,
+      host: process.env.OLLAMA_BASE_PATH,
+      temperature: 0,
+      messages: messages.map((msg, idx) => ({
+        index: idx,
+        role: msg.role,
+        contentLength: msg.content?.length || 0,
+        contentPreview:
+          msg.content?.substring(0, 300) +
+          (msg.content?.length > 300 ? "..." : ""),
+      })),
+    });
+
+    // 显示完整的系统提示词（通常是第一条消息）
+    if (messages.length > 0 && messages[0].role === "system") {
+      console.log(`\x1b[36m[DEBUG-OLLAMA-AGENT]\x1b[0m 系统提示词内容:`, {
+        fullSystemPrompt: messages[0].content,
+      });
+    }
+
+    const startTime = Date.now();
     const response = await this.client.chat({
       model: this.model,
       messages,
@@ -39,6 +63,14 @@ class OllamaProvider extends InheritMultiple([Provider, UnTooled]) {
         temperature: 0,
       },
     });
+    const endTime = Date.now();
+
+    console.log(`\x1b[36m[DEBUG-OLLAMA-AGENT]\x1b[0m Ollama Agent 响应:`, {
+      responseTime: `${endTime - startTime}ms`,
+      contentLength: response?.message?.content?.length || 0,
+      content: response?.message?.content,
+    });
+
     return response?.message?.content || null;
   }
 
@@ -49,7 +81,7 @@ class OllamaProvider extends InheritMultiple([Provider, UnTooled]) {
    * @param functions
    * @returns The completion.
    */
-  async complete(messages, functions = []) {
+  async complete (messages, functions = []) {
     try {
       let completion;
       if (functions.length > 0) {
@@ -78,14 +110,44 @@ class OllamaProvider extends InheritMultiple([Provider, UnTooled]) {
         this.providerLog(
           "Will assume chat completion without tool call inputs."
         );
+
+        // 🔍 DEBUG: 显示普通聊天模式的消息
+        const cleanedMessages = this.cleanMsgs(messages);
+        console.log(
+          `\x1b[36m[DEBUG-OLLAMA-CHAT]\x1b[0m 普通聊天模式发送给 Ollama:`,
+          {
+            model: this.model,
+            messageCount: cleanedMessages.length,
+            temperature: 0.5,
+            use_mlock: true,
+            messages: cleanedMessages.map((msg, idx) => ({
+              index: idx,
+              role: msg.role,
+              contentLength: msg.content?.length || 0,
+              contentPreview:
+                msg.content?.substring(0, 200) +
+                (msg.content?.length > 200 ? "..." : ""),
+            })),
+          }
+        );
+
+        const chatStartTime = Date.now();
         const response = await this.client.chat({
           model: this.model,
-          messages: this.cleanMsgs(messages),
+          messages: cleanedMessages,
           options: {
             use_mlock: true,
             temperature: 0.5,
           },
         });
+        const chatEndTime = Date.now();
+
+        console.log(`\x1b[36m[DEBUG-OLLAMA-CHAT]\x1b[0m 普通聊天模式响应:`, {
+          responseTime: `${chatEndTime - chatStartTime}ms`,
+          contentLength: response?.message?.content?.length || 0,
+          content: response?.message?.content,
+        });
+
         completion = response.message;
       }
 
@@ -109,7 +171,7 @@ class OllamaProvider extends InheritMultiple([Provider, UnTooled]) {
    * @returns The cost of the completion.
    * Stubbed since LMStudio has no cost basis.
    */
-  getCost(_usage) {
+  getCost (_usage) {
     return 0;
   }
 }

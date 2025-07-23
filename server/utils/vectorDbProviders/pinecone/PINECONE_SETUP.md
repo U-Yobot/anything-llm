@@ -14,7 +14,7 @@
 
 - Create an index on your Pinecone account. Name can be anything eg: `my-primary-index`
 - Metric `cosine`
-- Dimensions `1536` since we use OpenAI for embeddings
+- Dimensions `768` since we use OpenAI for embeddings
 - 1 pod, all other default settings are fine.
 
 ```

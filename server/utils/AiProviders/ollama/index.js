@@ -34,16 +34,28 @@ class OllamaAILLM {
     this.client = new Ollama({ host: this.basePath, headers: headers });
     this.embedder = embedder ?? new NativeEmbedder();
     this.defaultTemp = 0.7;
+
+    // 🔍 DEBUG: 显示 Ollama 配置信息
+    console.log(`\x1b[35m[DEBUG-OLLAMA-CONFIG]\x1b[0m Ollama LLM 配置:`, {
+      basePath: this.basePath,
+      model: this.model,
+      performanceMode: this.performanceMode,
+      keepAlive: this.keepAlive,
+      defaultTemp: this.defaultTemp,
+      promptWindowLimit: this.promptWindowLimit(),
+      hasAuthToken: !!this.authToken,
+    });
+
     this.#log(
       `OllamaAILLM initialized with\nmodel: ${this.model}\nperf: ${this.performanceMode}\nn_ctx: ${this.promptWindowLimit()}`
     );
   }
 
-  #log(text, ...args) {
+  #log (text, ...args) {
     console.log(`\x1b[32m[Ollama]\x1b[0m ${text}`, ...args);
   }
 
-  #appendContext(contextTexts = []) {
+  #appendContext (contextTexts = []) {
     if (!contextTexts || !contextTexts.length) return "";
     return (
       "\nContext:\n" +
@@ -55,11 +67,11 @@ class OllamaAILLM {
     );
   }
 
-  streamingEnabled() {
+  streamingEnabled () {
     return "streamGetChatCompletion" in this;
   }
 
-  static promptWindowLimit(_modelName) {
+  static promptWindowLimit (_modelName) {
     const limit = process.env.OLLAMA_MODEL_TOKEN_LIMIT || 4096;
     if (!limit || isNaN(Number(limit)))
       throw new Error("No Ollama token context limit was set.");
@@ -68,14 +80,14 @@ class OllamaAILLM {
 
   // Ensure the user set a value for the token limit
   // and if undefined - assume 4096 window.
-  promptWindowLimit() {
+  promptWindowLimit () {
     const limit = process.env.OLLAMA_MODEL_TOKEN_LIMIT || 4096;
     if (!limit || isNaN(Number(limit)))
       throw new Error("No Ollama token context limit was set.");
     return Number(limit);
   }
 
-  async isValidChatCompletionModel(_ = "") {
+  async isValidChatCompletionModel (_ = "") {
     return true;
   }
 
@@ -84,7 +96,7 @@ class OllamaAILLM {
    * @param {{userPrompt:string, attachments: import("../../helpers").Attachment[]}}
    * @returns {{content: string, images: string[]}}
    */
-  #generateContent({ userPrompt, attachments = [] }) {
+  #generateContent ({ userPrompt, attachments = [] }) {
     if (!attachments.length) return { content: userPrompt };
     const images = attachments.map(
       (attachment) => attachment.contentString.split("base64,").slice(-1)[0]
@@ -96,7 +108,7 @@ class OllamaAILLM {
    * Handles errors from the Ollama API to make them more user friendly.
    * @param {Error} e
    */
-  #errorHandler(e) {
+  #errorHandler (e) {
     switch (e.message) {
       case "fetch failed":
         throw new Error(
@@ -112,7 +124,7 @@ class OllamaAILLM {
    * @param {{attachments: import("../../helpers").Attachment[]}} param0
    * @returns
    */
-  constructPrompt({
+  constructPrompt ({
     systemPrompt = "",
     contextTexts = [],
     chatHistory = [],
@@ -133,7 +145,35 @@ class OllamaAILLM {
     ];
   }
 
-  async getChatCompletion(messages = null, { temperature = 0.7 }) {
+  async getChatCompletion (messages = [], options = {}) {
+    const { temperature = this.defaultTemp } = options;
+    const model = options.model || this.model;
+
+    // 🔍 DEBUG: 显示普通聊天模式发送给 Ollama 的消息
+    console.log(`\x1b[35m[DEBUG-OLLAMA-LLM]\x1b[0m 普通 LLM 发送给 Ollama:`, {
+      model: this.model,
+      temperature,
+      performanceMode: this.performanceMode,
+      keepAlive: this.keepAlive,
+      messageCount: messages.length,
+      promptWindowLimit: this.promptWindowLimit(),
+      messages: messages.map((msg, idx) => ({
+        index: idx,
+        role: msg.role,
+        contentLength: msg.content?.length || 0,
+        contentPreview:
+          msg.content?.substring(0, 200) +
+          (msg.content?.length > 200 ? "..." : ""),
+      })),
+      options: {
+        temperature,
+        use_mlock: true,
+        ...(this.performanceMode === "base"
+          ? {}
+          : { num_ctx: this.promptWindowLimit() }),
+      },
+    });
+
     const result = await LLMPerformanceMonitor.measureAsyncFunction(
       this.client
         .chat({
@@ -151,6 +191,15 @@ class OllamaAILLM {
           },
         })
         .then((res) => {
+          // 🔍 DEBUG: 显示 Ollama 响应
+          console.log(`\x1b[35m[DEBUG-OLLAMA-LLM]\x1b[0m 普通 LLM 响应:`, {
+            contentLength: res.message.content?.length || 0,
+            content: res.message.content,
+            prompt_eval_count: res.prompt_eval_count,
+            eval_count: res.eval_count,
+            total_duration: res.total_duration,
+          });
+
           return {
             content: res.message.content,
             usage: {
@@ -182,7 +231,7 @@ class OllamaAILLM {
     };
   }
 
-  async streamGetChatCompletion(messages = null, { temperature = 0.7 }) {
+  async streamGetChatCompletion (messages = null, { temperature = 0.7 }) {
     const measuredStreamRequest = await LLMPerformanceMonitor.measureStream(
       this.client.chat({
         model: this.model,
@@ -213,7 +262,7 @@ class OllamaAILLM {
    * @param {import("express").Request} request
    * @returns {Promise<string>}
    */
-  handleStream(response, stream, responseProps) {
+  handleStream (response, stream, responseProps) {
     const { uuid = uuidv4(), sources = [] } = responseProps;
 
     return new Promise(async (resolve) => {
@@ -277,9 +326,8 @@ class OllamaAILLM {
           type: "textResponseChunk",
           textResponse: "",
           close: true,
-          error: `Ollama:streaming - could not stream chat. ${
-            error?.cause ?? error.message
-          }`,
+          error: `Ollama:streaming - could not stream chat. ${error?.cause ?? error.message
+            }`,
         });
         response.removeListener("close", handleAbort);
         stream?.endMeasurement(usage);
@@ -289,14 +337,14 @@ class OllamaAILLM {
   }
 
   // Simple wrapper for dynamic embedder & normalize interface for all LLM implementations
-  async embedTextInput(textInput) {
+  async embedTextInput (textInput) {
     return await this.embedder.embedTextInput(textInput);
   }
-  async embedChunks(textChunks = []) {
+  async embedChunks (textChunks = []) {
     return await this.embedder.embedChunks(textChunks);
   }
 
-  async compressMessages(promptArgs = {}, rawHistory = []) {
+  async compressMessages (promptArgs = {}, rawHistory = []) {
     const { messageArrayCompressor } = require("../../helpers/chat");
     const messageArray = this.constructPrompt(promptArgs);
     return await messageArrayCompressor(this, messageArray, rawHistory);
