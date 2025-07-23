@@ -60,14 +60,14 @@ class AIbitat {
   /**
    * Get the chat history between agents and channels.
    */
-  get chats() {
+  get chats () {
     return this._chats;
   }
 
   /**
    * Install a plugin.
    */
-  use(plugin) {
+  use (plugin) {
     plugin.setup(this);
     return this;
   }
@@ -79,7 +79,7 @@ class AIbitat {
    * @param config
    * @returns
    */
-  agent(name = "", config = {}) {
+  agent (name = "", config = {}) {
     this.agents.set(name, config);
     return this;
   }
@@ -92,7 +92,7 @@ class AIbitat {
    * @param config
    * @returns
    */
-  channel(name = "", members = [""], config = {}) {
+  channel (name = "", members = [""], config = {}) {
     this.channels.set(name, {
       members,
       ...config,
@@ -107,7 +107,7 @@ class AIbitat {
    * @throws When the agent configuration is not found.
    * @returns The agent configuration.
    */
-  getAgentConfig(agent = "") {
+  getAgentConfig (agent = "") {
     const config = this.agents.get(agent);
     if (!config) {
       throw new Error(`Agent configuration "${agent}" not found`);
@@ -136,7 +136,7 @@ class AIbitat {
    * @throws When the channel configuration is not found.
    * @returns The channel configuration.
    */
-  getChannelConfig(channel = "") {
+  getChannelConfig (channel = "") {
     const config = this.channels.get(channel);
     if (!config) {
       throw new Error(`Channel configuration "${channel}" not found`);
@@ -154,7 +154,7 @@ class AIbitat {
    * @param node The name of the group.
    * @returns The members of the group.
    */
-  getGroupMembers(node = "") {
+  getGroupMembers (node = "") {
     const group = this.getChannelConfig(node);
     return group.members;
   }
@@ -165,7 +165,7 @@ class AIbitat {
    * @param listener
    * @returns
    */
-  onAbort(listener = () => null) {
+  onAbort (listener = () => null) {
     this.emitter.on("abort", listener);
     return this;
   }
@@ -173,7 +173,7 @@ class AIbitat {
   /**
    * Abort the running of any plugins that may still be pending (Langchain summarize)
    */
-  abort() {
+  abort () {
     this.emitter.emit("abort", null, this);
   }
 
@@ -183,7 +183,7 @@ class AIbitat {
    * @param listener
    * @returns
    */
-  onTerminate(listener = () => null) {
+  onTerminate (listener = () => null) {
     this.emitter.on("terminate", listener);
     return this;
   }
@@ -193,7 +193,7 @@ class AIbitat {
    *
    * @param node Last node to chat with
    */
-  terminate(node = "") {
+  terminate (node = "") {
     this.emitter.emit("terminate", node, this);
   }
 
@@ -203,7 +203,7 @@ class AIbitat {
    * @param listener
    * @returns
    */
-  onInterrupt(listener = () => null) {
+  onInterrupt (listener = () => null) {
     this.emitter.on("interrupt", listener);
     return this;
   }
@@ -214,7 +214,7 @@ class AIbitat {
    * @param route The nodes that participated in the interruption.
    * @returns
    */
-  interrupt(route) {
+  interrupt (route) {
     this._chats.push({
       ...route,
       state: "interrupt",
@@ -229,7 +229,7 @@ class AIbitat {
    * @param listener
    * @returns
    */
-  onMessage(listener = (chat) => null) {
+  onMessage (listener = (chat) => null) {
     this.emitter.on("message", listener);
     return this;
   }
@@ -240,7 +240,7 @@ class AIbitat {
    *
    * @param message
    */
-  newMessage(message) {
+  newMessage (message) {
     const chat = {
       ...message,
       state: "success",
@@ -256,7 +256,7 @@ class AIbitat {
    * @param listener
    * @returns
    */
-  onError(
+  onError (
     listener = (
       /**
        * The error that occurred.
@@ -272,7 +272,7 @@ class AIbitat {
       /**
        * The message when the error occurred.
        */
-      {}
+      { }
     ) => null
   ) {
     this.emitter.on("replyError", listener);
@@ -286,7 +286,7 @@ class AIbitat {
    * @param route
    * @param error
    */
-  newError(route, error) {
+  newError (route, error) {
     const chat = {
       ...route,
       content: error instanceof Error ? error.message : String(error),
@@ -302,7 +302,7 @@ class AIbitat {
    * @param listener
    * @returns
    */
-  onStart(listener = (chat, aibitat) => null) {
+  onStart (listener = (chat, aibitat) => null) {
     this.emitter.on("start", listener);
     return this;
   }
@@ -312,7 +312,7 @@ class AIbitat {
    *
    * @param message The message to start the chat.
    */
-  async start(message) {
+  async start (message) {
     // register the message in the chat history
     this.newMessage(message);
     this.emitter.emit("start", message, this);
@@ -332,7 +332,7 @@ class AIbitat {
    * @param route
    * @param keepAlive Whether to keep the chat alive.
    */
-  async chat(route, keepAlive = true) {
+  async chat (route, keepAlive = true) {
     // check if the message is for a group
     // if it is, select the next node to chat with from the group
     // and then ask them to reply.
@@ -422,7 +422,7 @@ class AIbitat {
    * @param agent
    * @returns {boolean} Whether the agent should interrupt the chat.
    */
-  shouldAgentInterrupt(agent = "") {
+  shouldAgentInterrupt (agent = "") {
     const config = this.getAgentConfig(agent);
     return this.defaultInterrupt === "ALWAYS" || config.interrupt === "ALWAYS";
   }
@@ -435,7 +435,7 @@ class AIbitat {
    * @param channel The name of the group.
    * @returns The name of the node to chat with.
    */
-  async selectNext(channel = "") {
+  async selectNext (channel = "") {
     // get all members of the group
     const nodes = this.getGroupMembers(channel);
     const channelConfig = this.getChannelConfig(channel);
@@ -486,8 +486,8 @@ class AIbitat {
         role: "user",
         content: `You are in a role play game. The following roles are available:
 ${availableNodes
-  .map((node) => `@${node}: ${this.getAgentConfig(node).role}`)
-  .join("\n")}.
+            .map((node) => `@${node}: ${this.getAgentConfig(node).role}`)
+            .join("\n")}.
 
 Read the following conversation.
 
@@ -518,7 +518,7 @@ Only return the role.
    * or is a custom plugin
    * eg: @@custom-plugin-name
    */
-  #parseFunctionName(pluginName = "") {
+  #parseFunctionName (pluginName = "") {
     if (!pluginName.includes("#") && !pluginName.startsWith("@@"))
       return pluginName;
     if (pluginName.startsWith("@@")) return pluginName.replace("@@", "");
@@ -528,7 +528,7 @@ Only return the role.
   /**
    * Check if the chat has reached the maximum number of rounds.
    */
-  hasReachedMaximumRounds(from = "", to = "") {
+  hasReachedMaximumRounds (from = "", to = "") {
     return this.getHistory({ from, to }).length >= this.maxRounds;
   }
 
@@ -538,7 +538,7 @@ Only return the role.
    * @param route.to The node that sent the chat.
    * @param route.from The node that will reply to the chat.
    */
-  async reply(route) {
+  async reply (route) {
     // get the provider for the node that will reply
     const fromConfig = this.getAgentConfig(route.from);
 
@@ -547,23 +547,23 @@ Only return the role.
       // otherwise, send the chat history between the two nodes
       this.channels.get(route.to)
         ? [
-            {
-              role: "user",
-              content: `You are in a whatsapp group. Read the following conversation and then reply.
+          {
+            role: "user",
+            content: `You are in a whatsapp group. Read the following conversation and then reply.
 Do not add introduction or conclusion to your reply because this will be a continuous conversation. Don't introduce yourself.
 
 CHAT HISTORY
 ${this.getHistory({ to: route.to })
-  .map((c) => `@${c.from}: ${c.content}`)
-  .join("\n")}
+                .map((c) => `@${c.from}: ${c.content}`)
+                .join("\n")}
 
 @${route.from}:`,
-            },
-          ]
+          },
+        ]
         : this.getHistory(route).map((c) => ({
-            content: c.content,
-            role: c.from === route.to ? "user" : "assistant",
-          }));
+          content: c.content,
+          role: c.from === route.to ? "user" : "assistant",
+        }));
 
     // build the messages to send to the provider
     const messages = [
@@ -597,14 +597,21 @@ ${this.getHistory({ to: route.to })
     return content;
   }
 
-  async handleExecution(
+  async handleExecution (
     provider,
     messages = [],
     functions = [],
     byAgent = null
   ) {
+    const isSynthesisStep = messages.some((msg) => msg.role === "function");
+    const llmTimerLabel = isSynthesisStep
+      ? `[AGENT-PERF] LLM Synthesis (${provider.model})`
+      : `[AGENT-PERF] LLM Tool Selection (${provider.model})`;
+
+    console.time(llmTimerLabel);
     // get the chat completion
     const completion = await provider.complete(messages, functions);
+    console.timeEnd(llmTimerLabel);
 
     if (completion.functionCall) {
       const { name, arguments: args } = completion.functionCall;
@@ -643,7 +650,10 @@ ${this.getHistory({ to: route.to })
         `[debug]: ${fn.caller} is attempting to call \`${name}\` tool`
       );
 
+      const toolTimerLabel = `[AGENT-PERF] Tool Execution: ${name}`;
+      console.time(toolTimerLabel);
       const result = await fn.handler(args);
+      console.timeEnd(toolTimerLabel);
       Telemetry.sendTelemetry("agent_tool_call", { tool: name }, null, true);
 
       // If the tool call has direct output enabled, return the result directly to the chat
@@ -686,7 +696,7 @@ ${this.getHistory({ to: route.to })
    * @param feedback The feedback to the interruption if any.
    * @returns
    */
-  async continue(feedback) {
+  async continue (feedback) {
     const lastChat = this._chats.at(-1);
     if (!lastChat || lastChat.state !== "interrupt") {
       throw new Error("No chat to continue");
@@ -727,7 +737,7 @@ ${this.getHistory({ to: route.to })
    * Retry the last chat that threw an error.
    * If the last chat was not an error, it will throw an error.
    */
-  async retry() {
+  async retry () {
     const lastChat = this._chats.at(-1);
     if (!lastChat || lastChat.state !== "error") {
       throw new Error("No chat to retry");
@@ -743,7 +753,7 @@ ${this.getHistory({ to: route.to })
   /**
    * Get the chat history between two nodes or all chats to/from a node.
    */
-  getHistory({ from, to }) {
+  getHistory ({ from, to }) {
     return this._chats.filter((chat) => {
       const isSuccess = chat.state === "success";
 
@@ -772,7 +782,7 @@ ${this.getHistory({ to: route.to })
    *
    * @param config The provider configuration.
    */
-  getProviderForConfig(config) {
+  getProviderForConfig (config) {
     if (typeof config.provider === "object") {
       return config.provider;
     }
@@ -840,7 +850,7 @@ ${this.getHistory({ to: route.to })
    * You are also required to specify the which node can call the function.
    * @param functionConfig The function configuration.
    */
-  function(functionConfig) {
+  function (functionConfig) {
     this.functions.set(functionConfig.name, functionConfig);
     return this;
   }
