@@ -41,17 +41,47 @@ export default function ChatHistory({
   const { getMessageAlignment } = useChatMessageAlignment();
 
   useEffect(() => {
-    if (!isUserScrolling && (isAtBottom || isStreaming)) {
-      scrollToBottom(false); // Use instant scroll for auto-scrolling
-    }
+    // 使用 setTimeout 确保 DOM 更新完成后再滚动
+    const timer = setTimeout(() => {
+      if (!isUserScrolling && (isAtBottom || isStreaming)) {
+        scrollToBottom(false); // Use instant scroll for auto-scrolling
+      }
+    }, 10);
+
+    return () => clearTimeout(timer);
   }, [history, isAtBottom, isStreaming, isUserScrolling]);
+
+  // 当历史记录长度变化时，强制滚动到底部（新消息添加时）
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // 如果用户没有主动向上滚动，就自动滚动到底部
+      if (!isUserScrolling || isAtBottom) {
+        scrollToBottom(false);
+        setIsAtBottom(true);
+      }
+    }, 50); // 稍微延长时间确保DOM完全更新
+
+    return () => clearTimeout(timer);
+  }, [history.length, isUserScrolling, isAtBottom]);
+
+  // 组件挂载时滚动到底部
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      scrollToBottom(false);
+      setIsAtBottom(true);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleScroll = (e) => {
     const { scrollTop, scrollHeight, clientHeight } = e.target;
-    const isBottom = scrollHeight - scrollTop === clientHeight;
+    // 使用更宽松的底部检测，允许5像素的误差
+    const isBottom = scrollHeight - scrollTop - clientHeight <= 5;
 
     // Detect if this is a user-initiated scroll
-    if (Math.abs(scrollTop - lastScrollTopRef.current) > 10) {
+    // 只有当用户明显向上滚动时才认为是用户操作
+    if (Math.abs(scrollTop - lastScrollTopRef.current) > 20) {
       setIsUserScrolling(!isBottom);
     }
 
@@ -72,9 +102,16 @@ export default function ChatHistory({
 
   const scrollToBottom = (smooth = false) => {
     if (chatHistoryRef.current) {
-      chatHistoryRef.current.scrollTo({
-        top: chatHistoryRef.current.scrollHeight,
+      const element = chatHistoryRef.current;
+      console.log("🔍 [SCROLL] 滚动到底部:", {
+        scrollHeight: element.scrollHeight,
+        clientHeight: element.clientHeight,
+        scrollTop: element.scrollTop,
+        smooth,
+      });
 
+      element.scrollTo({
+        top: element.scrollHeight,
         // Smooth is on when user clicks the button but disabled during auto scroll
         // We must disable this during auto scroll because it causes issues with
         // detecting when we are at the bottom of the chat.
@@ -185,27 +222,27 @@ export default function ChatHistory({
 
   if (history.length === 0 && !hasAttachments) {
     return (
-      <div className="flex flex-col h-full md:mt-0 pb-44 md:pb-40 w-full justify-end items-center">
+      <div className="flex flex-col items-center justify-end w-full h-full md:mt-0 pb-44 md:pb-40">
         <div className="flex flex-col items-center md:items-start md:max-w-[600px] w-full px-4">
-          <p className="text-white/60 text-lg font-base py-4">
+          <p className="py-4 text-lg text-white/60 font-base">
             {t("chat_window.welcome")}
           </p>
           {!user || user.role !== "default" ? (
-            <p className="w-full items-center text-white/60 text-lg font-base flex flex-col md:flex-row gap-x-1">
+            <p className="flex flex-col items-center w-full text-lg text-white/60 font-base md:flex-row gap-x-1">
               {t("chat_window.get_started")}
               <span
-                className="underline font-medium cursor-pointer"
+                className="font-medium underline cursor-pointer"
                 onClick={showModal}
               >
                 {t("chat_window.upload")}
               </span>
               {t("chat_window.or")}{" "}
-              <b className="font-medium italic">{t("chat_window.send_chat")}</b>
+              <b className="italic font-medium">{t("chat_window.send_chat")}</b>
             </p>
           ) : (
-            <p className="w-full items-center text-white/60 text-lg font-base flex flex-col md:flex-row gap-x-1">
+            <p className="flex flex-col items-center w-full text-lg text-white/60 font-base md:flex-row gap-x-1">
               {t("chat_window.get_started_default")}{" "}
-              <b className="font-medium italic">{t("chat_window.send_chat")}</b>
+              <b className="italic font-medium">{t("chat_window.send_chat")}</b>
             </p>
           )}
           <WorkspaceChatSuggestions
@@ -225,7 +262,7 @@ export default function ChatHistory({
 
   return (
     <div
-      className={`markdown text-white/80 light:text-theme-text-primary font-light ${textSizeClass} h-full md:h-[83%] pb-[100px] pt-6 md:pt-0 md:pb-20 md:mx-0 overflow-y-scroll flex flex-col justify-start ${showScrollbar ? "show-scrollbar" : "no-scroll"}`}
+      className={`markdown text-white/80 light:text-theme-text-primary font-light ${textSizeClass} h-full pb-[120px] pt-6 md:pt-0 md:pb-[120px] md:mx-0 overflow-y-auto flex flex-col justify-start ${showScrollbar ? "show-scrollbar" : "no-scroll"}`}
       id="chat-history"
       ref={chatHistoryRef}
       onScroll={handleScroll}
@@ -237,16 +274,16 @@ export default function ChatHistory({
         <ManageWorkspace hideModal={hideModal} providedSlug={workspace.slug} />
       )}
       {!isAtBottom && (
-        <div className="fixed bottom-40 right-10 md:right-20 z-50 cursor-pointer animate-pulse">
+        <div className="fixed z-50 cursor-pointer bottom-40 right-10 md:right-20 animate-pulse">
           <div className="flex flex-col items-center">
             <div
-              className="p-1 rounded-full border border-white/10 bg-white/10 hover:bg-white/20 hover:text-white"
+              className="p-1 border rounded-full border-white/10 bg-white/10 hover:bg-white/20 hover:text-white"
               onClick={() => {
                 scrollToBottom(true);
                 setIsUserScrolling(false);
               }}
             >
-              <ArrowDown weight="bold" className="text-white/60 w-5 h-5" />
+              <ArrowDown weight="bold" className="w-5 h-5 text-white/60" />
             </div>
           </div>
         </div>
@@ -266,7 +303,7 @@ const getLastMessageInfo = (history) => {
 function WorkspaceChatSuggestions({ suggestions = [], sendSuggestion }) {
   if (suggestions.length === 0) return null;
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-theme-text-primary text-xs mt-10 w-full justify-center">
+    <div className="grid justify-center w-full grid-cols-1 gap-2 mt-10 text-xs md:grid-cols-2 text-theme-text-primary">
       {suggestions.map((suggestion, index) => (
         <button
           key={index}
