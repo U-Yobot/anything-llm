@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Play,
   Pause,
@@ -14,6 +14,23 @@ export default function InlineVideoRenderer({ videos = [], className = "" }) {
   const [playingVideos, setPlayingVideos] = useState(new Set());
   const [mutedVideos, setMutedVideos] = useState(new Set());
   const videoRefs = useRef({});
+
+  // 监听ESC键退出全屏
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape" && selectedVideo) {
+        setSelectedVideo(null);
+      }
+    };
+
+    if (selectedVideo) {
+      document.addEventListener("keydown", handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [selectedVideo]);
 
   console.log(`🎬 [InlineVideoRenderer] 渲染视频组件:`, {
     videosCount: videos.length,
@@ -111,24 +128,72 @@ export default function InlineVideoRenderer({ videos = [], className = "" }) {
                     {/* 播放/暂停按钮 */}
                     <button
                       onClick={(e) => togglePlay(video.id, e)}
-                      className="flex items-center justify-center w-12 h-12 text-white transition-colors bg-black bg-opacity-50 rounded-full hover:bg-opacity-70"
+                      className="flex items-center justify-center w-12 h-12 transition-all rounded-full shadow-2xl backdrop-blur-md border-2 bg-white/90 hover:bg-white/95 border-gray-800/70 hover:border-gray-800/90 text-gray-800 dark:bg-black/80 dark:hover:bg-black/90 dark:border-white/70 dark:hover:border-white/90 dark:text-white"
+                      style={{
+                        textShadow:
+                          "0 0 8px rgba(255,255,255,0.9), 0 0 16px rgba(255,255,255,0.7)",
+                        filter:
+                          "drop-shadow(0 0 4px rgba(0,0,0,0.4)) drop-shadow(0 2px 8px rgba(0,0,0,0.3))",
+                        boxShadow:
+                          "0 0 0 1px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.8)",
+                      }}
                     >
                       {playingVideos.has(video.id) ? (
-                        <Pause className="w-6 h-6" />
+                        <Pause
+                          className="w-6 h-6"
+                          style={{
+                            filter:
+                              "drop-shadow(0 0 2px rgba(0,0,0,0.8)) drop-shadow(0 0 4px rgba(255,255,255,0.4))",
+                            stroke: "rgba(255,255,255,0.2)",
+                            strokeWidth: "0.5px",
+                          }}
+                        />
                       ) : (
-                        <Play className="w-6 h-6" />
+                        <Play
+                          className="w-6 h-6"
+                          style={{
+                            filter:
+                              "drop-shadow(0 0 2px rgba(0,0,0,0.8)) drop-shadow(0 0 4px rgba(255,255,255,0.4))",
+                            stroke: "rgba(255,255,255,0.2)",
+                            strokeWidth: "0.5px",
+                          }}
+                        />
                       )}
                     </button>
 
                     {/* 静音按钮 */}
                     <button
                       onClick={(e) => toggleMute(video.id, e)}
-                      className="flex items-center justify-center w-10 h-10 text-white transition-colors bg-black bg-opacity-50 rounded-full hover:bg-opacity-70"
+                      className="flex items-center justify-center w-10 h-10 transition-all rounded-full shadow-2xl backdrop-blur-md border-2 bg-white/90 hover:bg-white/95 border-gray-800/70 hover:border-gray-800/90 text-gray-800 dark:bg-black/80 dark:hover:bg-black/90 dark:border-white/70 dark:hover:border-white/90 dark:text-white"
+                      style={{
+                        textShadow:
+                          "0 0 8px rgba(255,255,255,0.9), 0 0 16px rgba(255,255,255,0.7)",
+                        filter:
+                          "drop-shadow(0 0 4px rgba(0,0,0,0.4)) drop-shadow(0 2px 8px rgba(0,0,0,0.3))",
+                        boxShadow:
+                          "0 0 0 1px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.8)",
+                      }}
                     >
                       {mutedVideos.has(video.id) ? (
-                        <SpeakerX className="w-5 h-5" />
+                        <SpeakerX
+                          className="w-5 h-5"
+                          style={{
+                            filter:
+                              "drop-shadow(0 0 2px rgba(0,0,0,0.8)) drop-shadow(0 0 4px rgba(255,255,255,0.4))",
+                            stroke: "rgba(255,255,255,0.2)",
+                            strokeWidth: "0.5px",
+                          }}
+                        />
                       ) : (
-                        <SpeakerHigh className="w-5 h-5" />
+                        <SpeakerHigh
+                          className="w-5 h-5"
+                          style={{
+                            filter:
+                              "drop-shadow(0 0 2px rgba(0,0,0,0.8)) drop-shadow(0 0 4px rgba(255,255,255,0.4))",
+                            stroke: "rgba(255,255,255,0.2)",
+                            strokeWidth: "0.5px",
+                          }}
+                        />
                       )}
                     </button>
 
@@ -138,9 +203,25 @@ export default function InlineVideoRenderer({ videos = [], className = "" }) {
                         e.stopPropagation();
                         setSelectedVideo(video);
                       }}
-                      className="flex items-center justify-center w-10 h-10 text-white transition-colors bg-black bg-opacity-50 rounded-full hover:bg-opacity-70"
+                      className="flex items-center justify-center w-10 h-10 transition-all rounded-full shadow-2xl backdrop-blur-md border-2 bg-white/90 hover:bg-white/95 border-gray-800/70 hover:border-gray-800/90 text-gray-800 dark:bg-black/80 dark:hover:bg-black/90 dark:border-white/70 dark:hover:border-white/90 dark:text-white"
+                      style={{
+                        textShadow:
+                          "0 0 8px rgba(255,255,255,0.9), 0 0 16px rgba(255,255,255,0.7)",
+                        filter:
+                          "drop-shadow(0 0 4px rgba(0,0,0,0.4)) drop-shadow(0 2px 8px rgba(0,0,0,0.3))",
+                        boxShadow:
+                          "0 0 0 1px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.8)",
+                      }}
                     >
-                      <ArrowsOut className="w-5 h-5" />
+                      <ArrowsOut
+                        className="w-5 h-5"
+                        style={{
+                          filter:
+                            "drop-shadow(0 0 2px rgba(0,0,0,0.8)) drop-shadow(0 0 4px rgba(255,255,255,0.4))",
+                          stroke: "rgba(255,255,255,0.2)",
+                          strokeWidth: "0.5px",
+                        }}
+                      />
                     </button>
                   </div>
                 </div>
@@ -164,12 +245,26 @@ export default function InlineVideoRenderer({ videos = [], className = "" }) {
 
       {/* 全屏视频模态框 */}
       {selectedVideo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90">
-          <div className="relative w-full h-full max-w-6xl max-h-full p-4">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90"
+          onClick={() => setSelectedVideo(null)}
+        >
+          <div
+            className="relative w-full h-full max-w-6xl max-h-full p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* 关闭按钮 */}
             <button
               onClick={() => setSelectedVideo(null)}
-              className="absolute z-10 flex items-center justify-center w-10 h-10 text-white transition-colors bg-black bg-opacity-50 rounded-full top-4 right-4 hover:bg-opacity-70"
+              className="absolute z-10 flex items-center justify-center w-10 h-10 transition-all rounded-full shadow-2xl backdrop-blur-md border-2 bg-white/90 hover:bg-white/95 border-gray-800/70 hover:border-gray-800/90 text-gray-800 dark:bg-black/80 dark:hover:bg-black/90 dark:border-white/70 dark:hover:border-white/90 dark:text-white top-4 right-4"
+              style={{
+                textShadow:
+                  "0 0 8px rgba(255,255,255,0.9), 0 0 16px rgba(255,255,255,0.7)",
+                filter:
+                  "drop-shadow(0 0 4px rgba(0,0,0,0.4)) drop-shadow(0 2px 8px rgba(0,0,0,0.3))",
+                boxShadow:
+                  "0 0 0 1px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.8)",
+              }}
             >
               <X className="w-6 h-6" />
             </button>
@@ -180,7 +275,7 @@ export default function InlineVideoRenderer({ videos = [], className = "" }) {
               controls
               autoPlay
               className="object-contain w-full h-full rounded-lg"
-              onError={(e) => {
+              onError={() => {
                 console.log(`❌ [全屏视频加载失败] ${selectedVideo.src}`);
               }}
             />
