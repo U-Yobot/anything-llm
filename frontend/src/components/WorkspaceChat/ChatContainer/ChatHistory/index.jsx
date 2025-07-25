@@ -16,6 +16,7 @@ import useTextSize from "@/hooks/useTextSize";
 import { v4 } from "uuid";
 import { useTranslation } from "react-i18next";
 import { useChatMessageAlignment } from "@/hooks/useChatMessageAlignment";
+import SystemFAQMessage from "./SystemFAQMessage";
 
 export default function ChatHistory({
   history = [],
@@ -24,6 +25,7 @@ export default function ChatHistory({
   updateHistory,
   regenerateAssistantMessage,
   hasAttachments = false,
+  onQuestionClick,
 }) {
   const { t } = useTranslation();
   const lastScrollTopRef = useRef(0);
@@ -151,6 +153,7 @@ export default function ChatHistory({
         saveEditedMessage,
         forkThread,
         getMessageAlignment,
+        onQuestionClick,
       }),
     [
       workspace,
@@ -158,6 +161,7 @@ export default function ChatHistory({
       regenerateAssistantMessage,
       saveEditedMessage,
       forkThread,
+      onQuestionClick,
     ]
   );
   const lastMessageInfo = useMemo(() => getLastMessageInfo(history), [history]);
@@ -299,6 +303,7 @@ function buildMessages({
   saveEditedMessage,
   forkThread,
   getMessageAlignment,
+  onQuestionClick,
 }) {
   return history.reduce((acc, props, index) => {
     const isLastBotReply =
@@ -310,6 +315,18 @@ function buildMessages({
       } else {
         acc.push([props]);
       }
+      return acc;
+    }
+
+    if (props?.type === "systemFAQ") {
+      acc.push(
+        <SystemFAQMessage
+          key={props.uuid}
+          message={props.content}
+          functions={props.functions || []}
+          onQuestionClick={onQuestionClick}
+        />
+      );
       return acc;
     }
 

@@ -49,19 +49,19 @@ export default function Footer() {
     return (
       <div className="flex justify-center mb-2">
         <div className="flex space-x-4">
-          <div className="flex w-fit">
+          {/* <div className="flex w-fit">
             <Link
               to={paths.github()}
               target="_blank"
               rel="noreferrer"
-              className="transition-all duration-300 p-2 rounded-full bg-theme-sidebar-footer-icon hover:bg-theme-sidebar-footer-icon-hover"
+              className="p-2 transition-all duration-300 rounded-full bg-theme-sidebar-footer-icon hover:bg-theme-sidebar-footer-icon-hover"
               aria-label="Find us on GitHub"
               data-tooltip-id="footer-item"
               data-tooltip-content="View source code on GitHub"
             >
               <GithubLogo
                 weight="fill"
-                className="h-5 w-5"
+                className="w-5 h-5"
                 color="var(--theme-sidebar-footer-icon-fill)"
               />
             </Link>
@@ -71,14 +71,14 @@ export default function Footer() {
               to={paths.docs()}
               target="_blank"
               rel="noreferrer"
-              className="transition-all duration-300 p-2 rounded-full bg-theme-sidebar-footer-icon hover:bg-theme-sidebar-footer-icon-hover"
+              className="p-2 transition-all duration-300 rounded-full bg-theme-sidebar-footer-icon hover:bg-theme-sidebar-footer-icon-hover"
               aria-label="Docs"
               data-tooltip-id="footer-item"
               data-tooltip-content="Open AnythingLLM help docs"
             >
               <BookOpen
                 weight="fill"
-                className="h-5 w-5"
+                className="w-5 h-5"
                 color="var(--theme-sidebar-footer-icon-fill)"
               />
             </Link>
@@ -88,18 +88,18 @@ export default function Footer() {
               to={paths.discord()}
               target="_blank"
               rel="noreferrer"
-              className="transition-all duration-300 p-2 rounded-full bg-theme-sidebar-footer-icon hover:bg-theme-sidebar-footer-icon-hover"
+              className="p-2 transition-all duration-300 rounded-full bg-theme-sidebar-footer-icon hover:bg-theme-sidebar-footer-icon-hover"
               aria-label="Join our Discord server"
               data-tooltip-id="footer-item"
               data-tooltip-content="Join the AnythingLLM Discord"
             >
               <DiscordLogo
                 weight="fill"
-                className="h-5 w-5"
+                className="w-5 h-5"
                 color="var(--theme-sidebar-footer-icon-fill)"
               />
             </Link>
-          </div>
+          </div> */}
           {!isMobile && <SettingsButton />}
         </div>
         <Tooltip
@@ -121,7 +121,7 @@ export default function Footer() {
             href={item.url}
             target="_blank"
             rel="noreferrer"
-            className="transition-all duration-300 flex w-fit h-fit p-2 p-2 rounded-full bg-theme-sidebar-footer-icon hover:bg-theme-sidebar-footer-icon-hover hover:border-slate-100"
+            className="flex p-2 transition-all duration-300 rounded-full w-fit h-fit bg-theme-sidebar-footer-icon hover:bg-theme-sidebar-footer-icon-hover hover:border-slate-100"
           >
             {React.createElement(
               ICON_COMPONENTS?.[item.icon] ?? ICON_COMPONENTS.Info,

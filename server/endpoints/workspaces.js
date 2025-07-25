@@ -783,7 +783,7 @@ function workspaceEndpoints(app) {
 
         // Get threadId we are branching from if that request body is sent
         // and is a valid thread slug.
-        const threadId = !!threadSlug
+        const threadId = threadSlug
           ? (
               await WorkspaceThread.get({
                 slug: String(threadSlug),
@@ -824,7 +824,7 @@ function workspaceEndpoints(app) {
         });
         await WorkspaceChats.bulkCreate(chatsData);
         await WorkspaceThread.update(newThread, {
-          name: !!lastMessageText
+          name: lastMessageText
             ? truncate(lastMessageText, 22)
             : "Forked Thread",
         });
@@ -1056,6 +1056,36 @@ function workspaceEndpoints(app) {
         response.status(200).json(searchResults);
       } catch (error) {
         console.error("Error searching for workspaces:", error);
+        response.sendStatus(500).end();
+      }
+    }
+  );
+
+  app.get(
+    "/chat_function/list",
+    [validatedRequest, flexUserRoleValid([ROLES.all])],
+    async (request, response) => {
+      try {
+        // 返回预定义的聊天功能列表
+        // 这里可以根据实际需求从数据库获取或者根据工作空间配置动态生成
+        const chatFunctions = [
+          {
+            id: "document_qa",
+            name: "你好,我是三门智慧停车小助手!",
+            description: "我在这里帮助你解答三门智慧停车相关问题",
+            questions: [
+              "如何查找停车场？",
+              "如何缴费?",
+              "如何申请开票?",
+              "如何绑定,认证车牌?",
+              "如何领取使用优惠劵?",
+            ],
+          },
+        ];
+
+        response.status(200).json({ functions: chatFunctions });
+      } catch (e) {
+        console.error(e.message, e);
         response.sendStatus(500).end();
       }
     }

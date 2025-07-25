@@ -93,7 +93,7 @@ const Workspace = {
       });
   },
   deleteEditedChats: async function (slug = "", threadSlug = "", startingId) {
-    if (!!threadSlug)
+    if (threadSlug)
       return this.threads._deleteEditedChats(slug, threadSlug, startingId);
     return this._deleteEditedChats(slug, startingId);
   },
@@ -103,7 +103,7 @@ const Workspace = {
     chatId,
     newText
   ) {
-    if (!!threadSlug)
+    if (threadSlug)
       return this.threads._updateChatResponse(
         slug,
         threadSlug,
@@ -119,7 +119,7 @@ const Workspace = {
     chatHandler,
     attachments = [],
   }) {
-    if (!!threadSlug)
+    if (threadSlug)
       return this.threads.streamChat(
         { workspaceSlug, threadSlug },
         prompt,
@@ -525,6 +525,20 @@ const Workspace = {
         return { workspaces: [], threads: [] };
       });
     return response;
+  },
+
+  getChatFunctions: async function (slug) {
+    const functions = await fetch(`${API_BASE}/chat_function/list`, {
+      method: "GET",
+      headers: baseHeaders(),
+    })
+      .then((res) => res.json())
+      .then((res) => res.functions || [])
+      .catch((e) => {
+        console.error("Failed to fetch chat functions:", e);
+        return [];
+      });
+    return functions;
   },
 
   threads: WorkspaceThread,

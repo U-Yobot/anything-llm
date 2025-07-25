@@ -19,6 +19,7 @@ import SpeechRecognition, {
 } from "react-speech-recognition";
 import { MetricsProvider } from "./ChatHistory/HistoricalMessage/Actions/RenderMetrics";
 import { ChatTooltips } from "./ChatTooltips";
+import FloatingFAQButton from "../FloatingFAQButton";
 
 export default function ChatContainer({ workspace, knownHistory = [] }) {
   const { threadSlug = null } = useParams();
@@ -27,6 +28,8 @@ export default function ChatContainer({ workspace, knownHistory = [] }) {
   const [chatHistory, setChatHistory] = useState(knownHistory);
   const [socketId, setSocketId] = useState(null);
   const [websocket, setWebsocket] = useState(null);
+  const [chatFunctions, setChatFunctions] = useState([]);
+  const [showSystemFAQ, setShowSystemFAQ] = useState(false);
   const { files, parseAttachments } = useContext(DndUploaderContext);
 
   // Maintain state of message from whatever is in PromptInput
@@ -37,6 +40,33 @@ export default function ChatContainer({ workspace, knownHistory = [] }) {
   const { listening, resetTranscript } = useSpeechRecognition({
     clearTranscriptOnListen: true,
   });
+
+  // 获取聊天功能列表
+  useEffect(() => {
+    async function fetchChatFunctions() {
+      if (!workspace?.slug) return;
+
+      const functions = await Workspace.getChatFunctions(workspace.slug);
+      setChatFunctions(functions);
+
+      // 如果聊天历史为空且有功能列表，添加系统消息
+      if (knownHistory.length === 0 && functions.length > 0) {
+        const systemMessage = {
+          uuid: `system-faq-${Date.now()}`,
+          type: "systemFAQ",
+          role: "system",
+          content: "我在这里帮助你解答停车问题，请选择下面的问题开始咨询：",
+          functions: functions,
+          animate: false,
+          pending: false,
+        };
+        setChatHistory([systemMessage]);
+        setShowSystemFAQ(true);
+      }
+    }
+
+    fetchChatFunctions();
+  }, [workspace?.slug, knownHistory.length]);
 
   // Emit an update to the state of the prompt input without directly
   // passing a prop in so that it does not re-render constantly.
@@ -298,6 +328,46 @@ export default function ChatContainer({ workspace, knownHistory = [] }) {
     handleWSS();
   }, [socketId]);
 
+  // 处理问题点击
+  const handleQuestionClick = (question) => {
+    console.log("🔍 [FAQ] 点击问题:", question);
+    console.log("🔍 [FAQ] 当前状态:", {
+      showSystemFAQ,
+      chatHistoryLength: chatHistory.length,
+      chatFunctionsLength: chatFunctions.length,
+    });
+
+    // 过滤掉系统FAQ消息，构建干净的聊天历史
+    const cleanHistory = chatHistory.filter((msg) => msg.type !== "systemFAQ");
+    console.log("🔍 [FAQ] 清理后历史长度:", cleanHistory.length);
+
+    // 构建新的聊天历史，添加用户消息和待处理的助手消息
+    const newChatHistory = [
+      ...cleanHistory,
+      {
+        content: question,
+        role: "user",
+        attachments: [],
+      },
+      {
+        content: "",
+        role: "assistant",
+        pending: true,
+        userMessage: question,
+        animate: true,
+      },
+    ];
+
+    console.log("🔍 [FAQ] 新历史长度:", newChatHistory.length);
+
+    // 更新状态
+    setShowSystemFAQ(false);
+    setChatHistory(newChatHistory);
+    setLoadingResponse(true);
+
+    console.log("🔍 [FAQ] 状态已更新，showSystemFAQ设为false");
+  };
+
   return (
     <div
       style={{ height: isMobile ? "100%" : "calc(100% - 32px)" }}
@@ -313,6 +383,7 @@ export default function ChatContainer({ workspace, knownHistory = [] }) {
             updateHistory={setChatHistory}
             regenerateAssistantMessage={regenerateAssistantMessage}
             hasAttachments={files.length > 0}
+            onQuestionClick={handleQuestionClick}
           />
         </MetricsProvider>
         <PromptInput
@@ -324,6 +395,22 @@ export default function ChatContainer({ workspace, knownHistory = [] }) {
         />
       </DnDFileUploaderWrapper>
       <ChatTooltips />
+      {/* 浮动FAQ按钮 - 只在有真实聊天内容且不显示系统FAQ时显示 */}
+      {(() => {
+        const realChatHistory = chatHistory.filter(
+          (msg) => msg.type !== "systemFAQ"
+        );
+        return (
+          realChatHistory.length > 0 &&
+          !showSystemFAQ &&
+          chatFunctions.length > 0
+        );
+      })() && (
+        <FloatingFAQButton
+          functions={chatFunctions}
+          onQuestionClick={handleQuestionClick}
+        />
+      )}
     </div>
   );
 }
