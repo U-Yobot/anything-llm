@@ -60,7 +60,52 @@ export default function ChatContainer({ workspace, knownHistory = [] }) {
           animate: false,
           pending: false,
         };
-        setChatHistory([systemMessage]);
+
+        // 测试：添加一个图片指南示例（实际使用时应该从后端获取）
+        if (process.env.NODE_ENV === "development") {
+          const imageGuideExample = {
+            uuid: `image-guide-${Date.now()}`,
+            type: "imageGuide",
+            role: "assistant",
+            content: "以下是停车缴费的详细操作步骤：",
+            title: "停车缴费操作指南",
+            images: [
+              {
+                id: "parking_step1",
+                title: "第一步：扫描二维码",
+                thumbnail:
+                  "https://via.placeholder.com/400x300/4F46E5/FFFFFF?text=扫描二维码",
+                fullsize:
+                  "https://via.placeholder.com/1200x900/4F46E5/FFFFFF?text=扫描二维码详细图",
+                alt: "扫描停车场二维码",
+              },
+              {
+                id: "parking_step2",
+                title: "第二步：输入车牌号",
+                thumbnail:
+                  "https://via.placeholder.com/400x300/059669/FFFFFF?text=输入车牌",
+                fullsize:
+                  "https://via.placeholder.com/1200x900/059669/FFFFFF?text=输入车牌详细图",
+                alt: "输入车牌号码界面",
+              },
+              {
+                id: "parking_step3",
+                title: "第三步：选择支付方式",
+                thumbnail:
+                  "https://via.placeholder.com/400x300/DC2626/FFFFFF?text=选择支付",
+                fullsize:
+                  "https://via.placeholder.com/1200x900/DC2626/FFFFFF?text=选择支付详细图",
+                alt: "选择支付方式界面",
+              },
+            ],
+            animate: false,
+            pending: false,
+          };
+
+          setChatHistory([systemMessage, imageGuideExample]);
+        } else {
+          setChatHistory([systemMessage]);
+        }
         setShowSystemFAQ(true);
       }
     }

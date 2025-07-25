@@ -38,7 +38,10 @@ export default function FloatingFAQButton({ functions = [], onQuestionClick }) {
 
             <div className="space-y-3">
               {functions.map((func) => (
-                <div key={func.id} className="p-3 border rounded-lg bg-theme-bg-primary border-theme-modal-border">
+                <div
+                  key={func.id}
+                  className="p-3 border rounded-lg bg-theme-bg-primary border-theme-modal-border"
+                >
                   {/* 功能分类标题 */}
                   <div className="flex items-center mb-2">
                     <h4 className="text-sm font-medium text-theme-text-primary">
@@ -55,7 +58,7 @@ export default function FloatingFAQButton({ functions = [], onQuestionClick }) {
                       <button
                         key={index}
                         onClick={() => handleQuestionClick(question)}
-                        className="w-full p-2 text-xs text-left transition-all duration-200 border border-transparent rounded text-theme-text-primary hover:bg-blue-50 dark:hover:bg-gray-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-sm"
+                        className="w-full p-2 text-xs text-left transition-all duration-200 border border-transparent rounded text-theme-text-primary hover:bg-theme-bg-secondary hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-sm"
                       >
                         <span className="mr-2 text-blue-500">•</span>
                         {question}

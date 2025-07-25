@@ -17,6 +17,7 @@ import { v4 } from "uuid";
 import { useTranslation } from "react-i18next";
 import { useChatMessageAlignment } from "@/hooks/useChatMessageAlignment";
 import SystemFAQMessage from "./SystemFAQMessage";
+import ImageGuideMessage from "./ImageGuideMessage";
 
 export default function ChatHistory({
   history = [],
@@ -362,6 +363,18 @@ function buildMessages({
           message={props.content}
           functions={props.functions || []}
           onQuestionClick={onQuestionClick}
+        />
+      );
+      return acc;
+    }
+
+    if (props?.type === "imageGuide") {
+      acc.push(
+        <ImageGuideMessage
+          key={props.uuid}
+          message={props.content}
+          images={props.images || []}
+          title={props.title || "操作指南"}
         />
       );
       return acc;

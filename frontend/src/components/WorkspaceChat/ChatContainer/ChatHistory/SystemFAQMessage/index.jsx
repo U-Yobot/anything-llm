@@ -12,14 +12,14 @@ export default function SystemFAQMessage({
       <div className="py-8 px-4 w-full flex gap-x-5 md:max-w-[80%] flex-col">
         <div className="flex gap-x-5">
           {/* 系统头像 */}
-          <div className="flex-shrink-0 mt-3 ml-2">
+          <div className="flex flex-col items-center">
             <div className="flex items-center justify-center w-[35px] h-[35px] rounded-full bg-blue-500">
               <Robot className="w-6 h-6 text-white" />
             </div>
           </div>
 
           {/* 消息内容 */}
-          <div className="flex flex-col w-full">
+          <div className="break-words flex flex-col w-full">
             <div className="p-4 border rounded-lg bg-theme-bg-secondary border-theme-modal-border">
               {/* 醒目的标题 */}
               <div className="flex items-center pb-3 mb-4 border-b border-theme-modal-border">
@@ -49,7 +49,7 @@ export default function SystemFAQMessage({
                         <button
                           key={index}
                           onClick={() => onQuestionClick(question)}
-                          className="w-full p-3 text-sm text-left transition-all duration-200 border border-gray-200 dark:border-gray-600 rounded-lg text-theme-text-primary hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md hover:scale-[1.02] bg-white/50 dark:bg-gray-800/50"
+                          className="w-full p-3 text-sm text-left transition-all duration-200 border border-theme-modal-border rounded-lg text-theme-text-primary hover:bg-theme-bg-primary hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md hover:scale-[1.02] bg-theme-bg-primary/50"
                         >
                           <span className="mr-3 font-bold text-blue-500">
                             →

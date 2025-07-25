@@ -36,7 +36,7 @@ export default function AvailableAgentsButton({ showing, setShowAgents }) {
 
 function AbilityTag({ text }) {
   return (
-    <div className="px-2 bg-theme-action-menu-item-hover text-theme-text-secondary text-xs w-fit rounded-sm">
+    <div className="px-2 text-xs rounded-sm bg-theme-action-menu-item-hover text-theme-text-secondary w-fit">
       <p>{text}</p>
     </div>
   );
@@ -95,10 +95,10 @@ export function AvailableAgents({
           >
             <button
               onClick={handleAgentClick}
-              className="border-none w-full hover:cursor-pointer hover:bg-theme-action-menu-item-hover px-2 py-2 rounded-xl flex flex-col justify-start group"
+              className="flex flex-col justify-start w-full px-2 py-2 border-none hover:cursor-pointer hover:bg-theme-action-menu-item-hover rounded-xl group"
             >
-              <div className="w-full flex-col text-left flex pointer-events-none">
-                <div className="text-theme-text-primary text-sm">
+              <div className="flex flex-col w-full text-left pointer-events-none">
+                <div className="text-sm text-theme-text-primary">
                   <b>{t("chat_window.at_agent")}</b>
                   {t("chat_window.default_agent_description")}
                 </div>
@@ -116,10 +116,10 @@ export function AvailableAgents({
             <button
               type="button"
               disabled={true}
-              className="w-full rounded-xl flex flex-col justify-start group"
+              className="flex flex-col justify-start w-full rounded-xl group"
             >
-              <div className="w-full flex-col text-center flex pointer-events-none">
-                <div className="text-theme-text-secondary text-xs italic">
+              <div className="flex flex-col w-full text-center pointer-events-none">
+                <div className="text-xs italic text-theme-text-secondary">
                   {t("chat_window.custom_agents_coming_soon")}
                 </div>
               </div>
