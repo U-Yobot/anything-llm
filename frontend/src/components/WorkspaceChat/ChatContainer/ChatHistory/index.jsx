@@ -33,7 +33,7 @@ const IMAGE_EXTENSIONS = [
 ];
 
 // 检测 LLM 响应内容中是否引用了图片
-function detectImagesInResponse(message = "", sources = []) {
+export function detectImagesInResponse(message = "", sources = []) {
   console.log(`🔍 [图片检测开始] 消息内容:`, message.substring(0, 200) + "...");
   console.log(`🔍 [图片检测开始] Sources数量:`, sources.length);
 
@@ -199,12 +199,149 @@ function detectImagesInResponse(message = "", sources = []) {
     });
   });
 
+  // 同时检测视频文件
+  console.log(`🎬 [视频检测] 开始在消息中查找视频文件...`);
+  const videoRegex =
+    /\[@([\u4e00-\u9fa5a-zA-Z0-9_.-]+\.(mp4|avi|mov|wmv|flv|webm|mkv|m4v|3gp|ogv))\]/gi;
+  const foundVideos = message.match(videoRegex);
+
+  if (foundVideos && foundVideos.length > 0) {
+    console.log(`🎬 [直接匹配] 在消息中找到视频标记:`, foundVideos);
+
+    // 从 [@filename] 格式中提取文件名
+    const extractedFilenames = foundVideos.map((match) => {
+      const filenameMatch = match.match(/\[@(.*?)\]/);
+      return filenameMatch ? filenameMatch[1] : match;
+    });
+
+    console.log(`📝 [提取文件名] 提取的视频文件名:`, extractedFilenames);
+
+    // 去重并创建视频对象
+    const uniqueVideos = [...new Set(extractedFilenames)];
+
+    uniqueVideos.forEach((fileName, index) => {
+      // 移除文件扩展名用于显示
+      const cleanFileName = fileName.replace(/\.[^/.]+$/, "");
+
+      console.log(
+        `📝 [视频文件处理] 原始: "${fileName}" -> 清理: "${cleanFileName}"`
+      );
+
+      // 生成视频URL - 使用public目录下的demo视频或在线示例视频
+      const demoVideos = [
+        "/video/invoice-used.mp4", // 使用现有的demo视频
+        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4",
+      ];
+
+      const videoIndex = index % demoVideos.length;
+      const videoSrc = demoVideos[videoIndex];
+
+      console.log(`🎬 [智能视频检测] LLM提到了视频: ${fileName}`, {
+        message: message.substring(0, 100) + "...",
+        fileName: fileName,
+        videoIndex,
+        videoSrc: videoSrc,
+      });
+
+      imageFiles.push({
+        id: `llm_mentioned_video_${index}`,
+        title: cleanFileName,
+        filename: fileName,
+        src: videoSrc,
+        alt: `相关视频: ${fileName}`,
+        type: "video", // 添加类型标识
+        source: {
+          title: cleanFileName,
+          chunkSource: `virtual://${fileName}`,
+        },
+      });
+    });
+  }
+
   console.log(
-    `🎯 [detectImagesInResponse] 最终返回图片数量:`,
+    `🎯 [detectImagesInResponse] 最终返回图片+视频数量:`,
     imageFiles.length
   );
-  console.log(`📋 [detectImagesInResponse] 返回的图片对象:`, imageFiles);
+  console.log(`📋 [detectImagesInResponse] 返回的对象:`, imageFiles);
   return imageFiles;
+}
+
+// 检测消息中的视频引用
+export function detectVideosInResponse(message, chatId) {
+  console.log(`🎬 [detectVideosInResponse] 开始检测视频...`);
+  console.log(`📝 [消息内容]`, message.substring(0, 200) + "...");
+
+  const videoFiles = [];
+
+  // 使用标记格式 [@视频文件名] 来精确匹配视频文件名
+  const videoRegex =
+    /\[@([\u4e00-\u9fa5a-zA-Z0-9_.-]+\.(mp4|avi|mov|wmv|flv|webm|mkv|m4v|3gp|ogv))\]/gi;
+  const foundVideos = message.match(videoRegex);
+
+  if (foundVideos && foundVideos.length > 0) {
+    console.log(`🎬 [直接匹配] 在消息中找到视频标记:`, foundVideos);
+
+    // 从 [@filename] 格式中提取文件名
+    const extractedFilenames = foundVideos.map((match) => {
+      const filenameMatch = match.match(/\[@(.*?)\]/);
+      return filenameMatch ? filenameMatch[1] : match;
+    });
+
+    console.log(`📝 [提取文件名] 提取的视频文件名:`, extractedFilenames);
+
+    // 去重并创建视频对象
+    const uniqueVideos = [...new Set(extractedFilenames)];
+
+    uniqueVideos.forEach((fileName, index) => {
+      // 移除文件扩展名用于显示
+      const cleanFileName = fileName.replace(/\.[^/.]+$/, "");
+
+      console.log(
+        `📝 [视频文件处理] 原始: "${fileName}" -> 清理: "${cleanFileName}"`
+      );
+
+      // 生成视频URL - 使用public目录下的demo视频或在线示例视频
+      const demoVideos = [
+        "/video/invoice-used.mp4", // 使用现有的demo视频
+        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+        "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4",
+      ];
+
+      const videoIndex = index % demoVideos.length;
+      const videoSrc = demoVideos[videoIndex];
+
+      console.log(`🎬 [智能视频检测] LLM提到了视频: ${fileName}`, {
+        message: message.substring(0, 100) + "...",
+        fileName: fileName,
+        videoIndex,
+        videoSrc: videoSrc,
+      });
+
+      videoFiles.push({
+        id: `llm_mentioned_video_${index}`,
+        title: cleanFileName,
+        filename: fileName,
+        src: videoSrc,
+        alt: `相关视频: ${fileName}`,
+        source: {
+          title: cleanFileName,
+          chunkSource: `virtual://${fileName}`,
+        },
+      });
+    });
+  }
+
+  console.log(
+    `🎯 [detectVideosInResponse] 最终返回视频数量:`,
+    videoFiles.length
+  );
+  console.log(`📋 [detectVideosInResponse] 返回的视频对象:`, videoFiles);
+  return videoFiles;
 }
 
 export default function ChatHistory({

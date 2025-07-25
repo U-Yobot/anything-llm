@@ -1,4 +1,4 @@
-import { memo, useRef, useEffect } from "react";
+import { memo, useRef, useEffect, useMemo } from "react";
 import { Warning } from "@phosphor-icons/react";
 import UserIcon from "../../../../UserIcon";
 import renderMarkdown from "@/utils/chat/markdown";
@@ -9,6 +9,9 @@ import {
   THOUGHT_REGEX_OPEN,
   ThoughtChainComponent,
 } from "../ThoughtContainer";
+import InlineImageRenderer from "../InlineImageRenderer";
+import InlineVideoRenderer from "../InlineVideoRenderer";
+import { detectImagesInResponse, detectVideosInResponse } from "../index";
 
 const PromptReply = ({
   uuid,
@@ -79,7 +82,7 @@ const PromptReply = ({
 };
 
 export function WorkspaceProfileImage({ workspace }) {
-  if (!!workspace.pfpUrl) {
+  if (workspace.pfpUrl) {
     return (
       <div className="relative w-[35px] h-[35px] rounded-full flex-shrink-0 overflow-hidden">
         <img
@@ -117,6 +120,15 @@ function RenderAssistantChatContent({ message }) {
     contentRef.current = msgToRender;
   }, [message]);
 
+  // 检测图片和视频（现在统一在 detectImagesInResponse 中处理）
+  const detectedMedia = useMemo(() => {
+    console.log(
+      `🔍 [媒体检测] 开始检测图片和视频，内容:`,
+      contentRef.current.substring(0, 100)
+    );
+    return detectImagesInResponse(contentRef.current, []);
+  }, [message]);
+
   const thinking =
     message.match(THOUGHT_REGEX_OPEN) && !message.match(THOUGHT_REGEX_CLOSE);
   if (thinking)
@@ -137,6 +149,33 @@ function RenderAssistantChatContent({ message }) {
         className="break-words"
         dangerouslySetInnerHTML={{ __html: renderMarkdown(contentRef.current) }}
       />
+
+      {/* 渲染检测到的媒体文件 */}
+      {detectedMedia && detectedMedia.length > 0 && (
+        <>
+          {/* 分离图片和视频 */}
+          {(() => {
+            const images = detectedMedia.filter(
+              (item) => item.type !== "video"
+            );
+            const videos = detectedMedia.filter(
+              (item) => item.type === "video"
+            );
+
+            console.log(
+              `🔍 [媒体分离] 图片数量: ${images.length}, 视频数量: ${videos.length}`
+            );
+            console.log(`🔍 [媒体分离] 视频对象:`, videos);
+
+            return (
+              <>
+                {images.length > 0 && <InlineImageRenderer images={images} />}
+                {videos.length > 0 && <InlineVideoRenderer videos={videos} />}
+              </>
+            );
+          })()}
+        </>
+      )}
     </div>
   );
 }

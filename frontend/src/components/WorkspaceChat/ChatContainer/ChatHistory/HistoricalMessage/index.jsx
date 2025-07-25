@@ -18,6 +18,7 @@ import {
 } from "../ThoughtContainer";
 import paths from "@/utils/paths";
 import InlineImageRenderer from "../InlineImageRenderer";
+import InlineVideoRenderer from "../InlineVideoRenderer";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { chatQueryRefusalResponse } from "@/utils/chat";
@@ -261,14 +262,37 @@ const RenderChatContent = memo(
             __html: DOMPurify.sanitize(renderMarkdown(msgToRender)),
           }}
         />
-        {/* 如果有检测到的图片，在消息末尾显示 */}
+        {/* 如果有检测到的媒体文件，在消息末尾显示 */}
         {detectedImages && detectedImages.length > 0 && (
           <>
             {console.log(
-              `🎯 [HistoricalMessage] 准备渲染图片:`,
+              `🎯 [HistoricalMessage] 准备渲染媒体文件:`,
               detectedImages
             )}
-            <InlineImageRenderer images={detectedImages} className="mt-3" />
+            {(() => {
+              // 分离图片和视频
+              const images = detectedImages.filter(
+                (item) => item.type !== "video"
+              );
+              const videos = detectedImages.filter(
+                (item) => item.type === "video"
+              );
+
+              console.log(
+                `🔍 [HistoricalMessage] 图片数量: ${images.length}, 视频数量: ${videos.length}`
+              );
+
+              return (
+                <>
+                  {images.length > 0 && (
+                    <InlineImageRenderer images={images} className="mt-3" />
+                  )}
+                  {videos.length > 0 && (
+                    <InlineVideoRenderer videos={videos} className="mt-3" />
+                  )}
+                </>
+              );
+            })()}
           </>
         )}
       </>
