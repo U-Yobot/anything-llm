@@ -32,15 +32,25 @@ const IMAGE_EXTENSIONS = [
   ".ico",
 ];
 
-// 检测消息源中是否包含图片文件
-function detectImagesInSources(sources = []) {
+// 检测 LLM 响应内容中是否引用了图片
+function detectImagesInResponse(message = "", sources = []) {
+  console.log(`🔍 [图片检测开始] 消息内容:`, message.substring(0, 200) + "...");
+  console.log(`🔍 [图片检测开始] Sources数量:`, sources.length);
+
   const imageFiles = [];
 
+  // 创建图片文件名到source的映射
+  const imageSourceMap = new Map();
   sources.forEach((source, index) => {
-    // 检查文件名或标题中是否包含图片扩展名
     const title = source.title || "";
     const chunkSource = source.chunkSource || "";
     const text = source.text || "";
+
+    console.log(`📄 [Source ${index}]`, {
+      title,
+      chunkSource,
+      text: text.substring(0, 100) + "...",
+    });
 
     const hasImageExtension = IMAGE_EXTENSIONS.some(
       (ext) =>
@@ -50,47 +60,150 @@ function detectImagesInSources(sources = []) {
     );
 
     if (hasImageExtension) {
-      // 提取可能的图片文件名
       const fileName =
         title || chunkSource.split("/").pop() || `image_${index + 1}`;
+      const cleanFileName = fileName.replace(/\.[^/.]+$/, ""); // 移除扩展名
 
-      // 生成图片URL - 使用免费的高质量风景图
-      const imageUrls = [
-        "https://picsum.photos/400/300?random=1", // 随机风景图
-        "https://picsum.photos/400/300?random=2",
-        "https://picsum.photos/400/300?random=3",
-        "https://picsum.photos/400/300?random=4",
-        "https://picsum.photos/400/300?random=5",
-      ];
-
-      const fullsizeUrls = [
-        "https://picsum.photos/1200/900?random=1", // 对应的高清版本
-        "https://picsum.photos/1200/900?random=2",
-        "https://picsum.photos/1200/900?random=3",
-        "https://picsum.photos/1200/900?random=4",
-        "https://picsum.photos/1200/900?random=5",
-      ];
-
-      const imageIndex = index % imageUrls.length;
-
-      console.log(`🖼️ [图片检测] 发现图片文件: ${fileName}`, {
+      console.log(`🖼️ [发现图片文件]`, {
+        fileName,
+        cleanFileName,
         title,
         chunkSource,
-        imageIndex,
-        thumbnailUrl: imageUrls[imageIndex],
       });
 
-      imageFiles.push({
-        id: `detected_image_${index}`,
-        title: fileName.replace(/\.[^/.]+$/, ""), // 移除扩展名
-        thumbnail: imageUrls[imageIndex],
-        fullsize: fullsizeUrls[imageIndex],
-        alt: `检测到的图片: ${fileName}`,
-        source: source,
+      imageSourceMap.set(cleanFileName.toLowerCase(), {
+        source,
+        index,
+        fileName,
       });
     }
   });
 
+  console.log(
+    `🗺️ [图片映射表] 共找到 ${imageSourceMap.size} 个图片文件:`,
+    Array.from(imageSourceMap.keys())
+  );
+
+  // 检查 LLM 响应中是否明确提到了这些图片文件名
+  const mentionedImages = [];
+  imageSourceMap.forEach((imageInfo, cleanFileName) => {
+    const messageLower = message.toLowerCase();
+    const fileNameLower = imageInfo.fileName.toLowerCase();
+
+    console.log(`🔍 [匹配检查] 检查图片: ${imageInfo.fileName}`, {
+      cleanFileName,
+      fileNameLower,
+      messageLower: messageLower.substring(0, 100) + "...",
+      includesFileName: messageLower.includes(fileNameLower),
+      includesCleanName: messageLower.includes(cleanFileName),
+      includesTitle: messageLower.includes(
+        imageInfo.source.title?.toLowerCase() || ""
+      ),
+    });
+
+    // 精确匹配：检查是否提到了完整的文件名或去掉扩展名的文件名
+    if (
+      messageLower.includes(fileNameLower) || // 完整文件名：如 "操作流程截图.png"
+      messageLower.includes(cleanFileName) || // 去掉扩展名：如 "操作流程截图"
+      messageLower.includes(imageInfo.source.title?.toLowerCase() || "") // 文档标题
+    ) {
+      console.log(
+        `✅ [图片匹配成功] LLM回复中提到了图片: ${imageInfo.fileName}`
+      );
+      mentionedImages.push(imageInfo);
+    } else {
+      console.log(
+        `❌ [图片匹配失败] LLM回复中未提到图片: ${imageInfo.fileName}`
+      );
+    }
+  });
+
+  console.log(`📊 [匹配结果] 共匹配到 ${mentionedImages.length} 个图片`);
+
+  // 如果没有从 sources 中找到图片，但消息中包含图片文件名，则创建虚拟图片
+  let imagesToShow = mentionedImages;
+  if (imagesToShow.length === 0) {
+    console.log(`🔍 [备用检测] 在消息中直接查找图片文件名...`);
+
+    // 使用标记格式 [!图片名称] 来精确匹配图片文件名
+    // 这种格式可以避免误匹配文本中的其他内容
+    const imageRegex =
+      /\[!([\u4e00-\u9fa5a-zA-Z0-9_.-]+\.(png|jpg|jpeg|gif|bmp|webp|svg|tiff|ico))\]/gi;
+    const foundImages = message.match(imageRegex);
+
+    if (foundImages && foundImages.length > 0) {
+      console.log(`🖼️ [直接匹配] 在消息中找到图片文件:`, foundImages);
+
+      // 去重并清理文件名
+      const uniqueImages = [...new Set(foundImages)];
+
+      uniqueImages.forEach((fileName, index) => {
+        // 从 [!filename] 格式中提取文件名
+        const filenameMatch = fileName.match(/\[!(.*?)\]/);
+        const extractedFileName = filenameMatch ? filenameMatch[1] : fileName;
+
+        // 移除文件扩展名用于显示
+        const cleanFileName = extractedFileName.replace(/\.[^/.]+$/, "");
+
+        console.log(
+          `📝 [文件名处理] 原始: "${fileName}" -> 提取: "${extractedFileName}" -> 清理: "${cleanFileName}"`
+        );
+
+        imagesToShow.push({
+          source: {
+            title: cleanFileName,
+            chunkSource: `virtual://${extractedFileName}`,
+          },
+          index: index,
+          fileName: extractedFileName,
+        });
+      });
+    }
+  }
+
+  imagesToShow.forEach((imageInfo) => {
+    // 生成图片URL - 使用免费的高质量风景图
+    const imageUrls = [
+      "https://picsum.photos/400/300?random=1",
+      "https://picsum.photos/400/300?random=2",
+      "https://picsum.photos/400/300?random=3",
+      "https://picsum.photos/400/300?random=4",
+      "https://picsum.photos/400/300?random=5",
+    ];
+
+    const fullsizeUrls = [
+      "https://picsum.photos/1200/900?random=1",
+      "https://picsum.photos/1200/900?random=2",
+      "https://picsum.photos/1200/900?random=3",
+      "https://picsum.photos/1200/900?random=4",
+      "https://picsum.photos/1200/900?random=5",
+    ];
+
+    const imageIndex = imageInfo.index % imageUrls.length;
+    const cleanFileName = imageInfo.fileName.replace(/\.[^/.]+$/, "");
+
+    console.log(`🖼️ [智能图片检测] LLM提到了图片: ${imageInfo.fileName}`, {
+      message: message.substring(0, 100) + "...",
+      fileName: imageInfo.fileName,
+      imageIndex,
+      thumbnailUrl: imageUrls[imageIndex],
+    });
+
+    imageFiles.push({
+      id: `llm_mentioned_image_${imageInfo.index}`,
+      title: cleanFileName,
+      thumbnail: imageUrls[imageIndex],
+      fullsize: fullsizeUrls[imageIndex],
+      alt: `相关图片: ${imageInfo.fileName}`,
+      source: imageInfo.source,
+    });
+  });
+
+  console.log(
+    `🎯 [detectImagesInResponse] 最终返回图片数量:`,
+    imageFiles.length
+  );
+  console.log(`📋 [detectImagesInResponse] 返回的图片对象:`, imageFiles);
   return imageFiles;
 }
 
@@ -473,10 +586,10 @@ function buildMessages({
         />
       );
     } else {
-      // 检测消息源中是否包含图片文件
+      // 基于 LLM 响应内容智能检测是否需要显示图片
       const detectedImages =
-        props.role === "assistant" && props.sources
-          ? detectImagesInSources(props.sources)
+        props.role === "assistant" && props.content
+          ? detectImagesInResponse(props.content, props.sources || [])
           : [];
 
       console.log(`🔍 [消息处理] 检测图片结果:`, {
@@ -488,18 +601,7 @@ function buildMessages({
         detectedImages,
       });
 
-      // 如果检测到图片，先显示图片指南组件
-      if (detectedImages.length > 0) {
-        console.log(`✅ [图片显示] 将显示 ${detectedImages.length} 张图片`);
-        acc.push(
-          <ImageGuideMessage
-            key={`${props.uuid || index}-images`}
-            message={`根据您的问题，我找到了以下相关图片：`}
-            images={detectedImages}
-            title="相关图片资料"
-          />
-        );
-      }
+      // 不再单独显示图片组件，而是将图片信息传递给 HistoricalMessage 进行内联显示
 
       acc.push(
         <HistoricalMessage
@@ -518,6 +620,7 @@ function buildMessages({
           forkThread={forkThread}
           metrics={props.metrics}
           alignmentCls={getMessageAlignment?.(props.role)}
+          detectedImages={detectedImages} // 传递检测到的图片信息
         />
       );
     }

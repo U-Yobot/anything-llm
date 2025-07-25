@@ -77,7 +77,7 @@ export const ThoughtChainComponent = forwardRef(
 
     return (
       <div className="flex justify-start items-end transition-all duration-200 w-full md:max-w-[800px]">
-        <div className="pb-2 w-full flex gap-x-5 flex-col relative">
+        <div className="relative flex flex-col w-full pb-2 gap-x-5">
           <div
             style={{
               transition: "all 0.1s ease-in-out",
@@ -141,7 +141,7 @@ export const ThoughtChainComponent = forwardRef(
                   data-tooltip-content={
                     isExpanded ? "Hide thought chain" : "Show thought chain"
                   }
-                  className="border-none text-theme-text-secondary hover:text-theme-text-primary transition-colors p-1 rounded-full hover:bg-theme-sidebar-item-hover"
+                  className="p-1 transition-colors border-none rounded-full text-theme-text-secondary hover:text-theme-text-primary hover:bg-theme-sidebar-item-hover"
                   aria-label={
                     isExpanded ? "Hide thought chain" : "Show thought chain"
                   }

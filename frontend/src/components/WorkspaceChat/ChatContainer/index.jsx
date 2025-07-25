@@ -107,23 +107,22 @@ export default function ChatContainer({ workspace, knownHistory = [] }) {
             uuid: `mock-image-detection-${Date.now()}`,
             role: "assistant",
             content:
-              "根据您的问题，我找到了相关的图片资料。这些图片展示了操作流程的详细步骤。",
+              "根据您的问题，我为您找到了详细的操作指南。\n\n首先，请查看操作流程截图.png，它展示了完整的操作步骤。然后参考界面示例.jpg来了解各个功能模块的位置和布局。\n\n如果在操作过程中遇到任何问题，可以参考错误处理指南.jpeg中的解决方案。\n\n这些图片资料将帮助您更好地理解和完成相关操作。",
             sources: [
+              {
+                title: "步骤1.jpg",
+                chunkSource: "file://documents/guides/步骤1.jpg",
+                text: "这是第一步的详细截图，展示了具体操作方法。",
+              },
+              {
+                title: "步骤2.png",
+                chunkSource: "file://documents/screenshots/步骤2.png",
+                text: "第二步的界面示例图片，展示了操作界面。",
+              },
               {
                 title: "操作流程截图.png",
                 chunkSource: "file://documents/guides/操作流程截图.png",
                 text: "这是操作流程的详细截图，包含了所有必要的步骤说明。",
-              },
-              {
-                title: "界面示例.jpg",
-                chunkSource: "file://documents/screenshots/界面示例.jpg",
-                text: "用户界面的示例图片，展示了各个功能模块的位置。",
-              },
-              {
-                title: "错误处理指南.jpeg",
-                chunkSource:
-                  "file://documents/troubleshooting/错误处理指南.jpeg",
-                text: "当遇到错误时的处理方法和界面提示。",
               },
             ],
             animate: false,

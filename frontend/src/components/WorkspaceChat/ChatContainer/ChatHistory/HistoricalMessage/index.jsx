@@ -17,6 +17,7 @@ import {
   ThoughtChainComponent,
 } from "../ThoughtContainer";
 import paths from "@/utils/paths";
+import InlineImageRenderer from "../InlineImageRenderer";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { chatQueryRefusalResponse } from "@/utils/chat";
@@ -37,6 +38,7 @@ const HistoricalMessage = ({
   forkThread,
   metrics = {},
   alignmentCls = "",
+  detectedImages = [], // 新增：检测到的图片信息
 }) => {
   const { t } = useTranslation();
   const { isEditing } = useEditMessage({ chatId, role });
@@ -53,7 +55,7 @@ const HistoricalMessage = ({
   const isRefusalMessage =
     role === "assistant" && message === chatQueryRefusalResponse(workspace);
 
-  if (!!error) {
+  if (error) {
     return (
       <div
         key={uuid}
@@ -62,12 +64,12 @@ const HistoricalMessage = ({
         <div className="py-8 px-4 w-full flex gap-x-5 md:max-w-[80%] flex-col">
           <div className={`flex gap-x-5 ${alignmentCls}`}>
             <ProfileImage role={role} workspace={workspace} />
-            <div className="p-2 rounded-lg bg-red-50 text-red-500">
+            <div className="p-2 text-red-500 rounded-lg bg-red-50">
               <span className="inline-block">
-                <Warning className="h-4 w-4 mb-1 inline-block" /> Could not
+                <Warning className="inline-block w-4 h-4 mb-1" /> Could not
                 respond to message.
               </span>
-              <p className="text-xs font-mono mt-2 border-l-2 border-red-300 pl-2 bg-red-200 p-2 rounded-sm">
+              <p className="p-2 pl-2 mt-2 font-mono text-xs bg-red-200 border-l-2 border-red-300 rounded-sm">
                 {error}
               </p>
             </div>
@@ -116,6 +118,7 @@ const HistoricalMessage = ({
                 role={role}
                 message={message}
                 expanded={isLastMessage}
+                detectedImages={detectedImages}
               />
               {isRefusalMessage && (
                 <Link
@@ -165,7 +168,7 @@ function ProfileImage({ role, workspace }) {
         <img
           src={workspace.pfpUrl}
           alt="Workspace profile picture"
-          className="absolute top-0 left-0 w-full h-full object-cover rounded-full bg-white"
+          className="absolute top-0 left-0 object-cover w-full h-full bg-white rounded-full"
         />
       </div>
     );
@@ -212,7 +215,7 @@ function ChatAttachments({ attachments = [] }) {
 }
 
 const RenderChatContent = memo(
-  ({ role, message, expanded = false }) => {
+  ({ role, message, expanded = false, detectedImages = [] }) => {
     // If the message is not from the assistant, we can render it directly
     // as normal since the user cannot think (lol)
     if (role !== "assistant")
@@ -258,6 +261,16 @@ const RenderChatContent = memo(
             __html: DOMPurify.sanitize(renderMarkdown(msgToRender)),
           }}
         />
+        {/* 如果有检测到的图片，在消息末尾显示 */}
+        {detectedImages && detectedImages.length > 0 && (
+          <>
+            {console.log(
+              `🎯 [HistoricalMessage] 准备渲染图片:`,
+              detectedImages
+            )}
+            <InlineImageRenderer images={detectedImages} className="mt-3" />
+          </>
+        )}
       </>
     );
   },
@@ -265,7 +278,9 @@ const RenderChatContent = memo(
     return (
       prevProps.role === nextProps.role &&
       prevProps.message === nextProps.message &&
-      prevProps.expanded === nextProps.expanded
+      prevProps.expanded === nextProps.expanded &&
+      JSON.stringify(prevProps.detectedImages) ===
+        JSON.stringify(nextProps.detectedImages)
     );
   }
 );
