@@ -102,7 +102,39 @@ export default function ChatContainer({ workspace, knownHistory = [] }) {
             pending: false,
           };
 
-          setChatHistory([systemMessage, imageGuideExample]);
+          // 添加一个模拟的包含图片文件引用的消息
+          const mockImageDetectionMessage = {
+            uuid: `mock-image-detection-${Date.now()}`,
+            role: "assistant",
+            content:
+              "根据您的问题，我找到了相关的图片资料。这些图片展示了操作流程的详细步骤。",
+            sources: [
+              {
+                title: "操作流程截图.png",
+                chunkSource: "file://documents/guides/操作流程截图.png",
+                text: "这是操作流程的详细截图，包含了所有必要的步骤说明。",
+              },
+              {
+                title: "界面示例.jpg",
+                chunkSource: "file://documents/screenshots/界面示例.jpg",
+                text: "用户界面的示例图片，展示了各个功能模块的位置。",
+              },
+              {
+                title: "错误处理指南.jpeg",
+                chunkSource:
+                  "file://documents/troubleshooting/错误处理指南.jpeg",
+                text: "当遇到错误时的处理方法和界面提示。",
+              },
+            ],
+            animate: false,
+            pending: false,
+          };
+
+          setChatHistory([
+            systemMessage,
+            imageGuideExample,
+            mockImageDetectionMessage,
+          ]);
         } else {
           setChatHistory([systemMessage]);
         }

@@ -19,6 +19,81 @@ import { useChatMessageAlignment } from "@/hooks/useChatMessageAlignment";
 import SystemFAQMessage from "./SystemFAQMessage";
 import ImageGuideMessage from "./ImageGuideMessage";
 
+// 图片文件扩展名列表
+const IMAGE_EXTENSIONS = [
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".gif",
+  ".bmp",
+  ".webp",
+  ".svg",
+  ".tiff",
+  ".ico",
+];
+
+// 检测消息源中是否包含图片文件
+function detectImagesInSources(sources = []) {
+  const imageFiles = [];
+
+  sources.forEach((source, index) => {
+    // 检查文件名或标题中是否包含图片扩展名
+    const title = source.title || "";
+    const chunkSource = source.chunkSource || "";
+    const text = source.text || "";
+
+    const hasImageExtension = IMAGE_EXTENSIONS.some(
+      (ext) =>
+        title.toLowerCase().includes(ext) ||
+        chunkSource.toLowerCase().includes(ext) ||
+        text.toLowerCase().includes(ext)
+    );
+
+    if (hasImageExtension) {
+      // 提取可能的图片文件名
+      const fileName =
+        title || chunkSource.split("/").pop() || `image_${index + 1}`;
+
+      // 生成图片URL - 使用免费的高质量风景图
+      const imageUrls = [
+        "https://picsum.photos/400/300?random=1", // 随机风景图
+        "https://picsum.photos/400/300?random=2",
+        "https://picsum.photos/400/300?random=3",
+        "https://picsum.photos/400/300?random=4",
+        "https://picsum.photos/400/300?random=5",
+      ];
+
+      const fullsizeUrls = [
+        "https://picsum.photos/1200/900?random=1", // 对应的高清版本
+        "https://picsum.photos/1200/900?random=2",
+        "https://picsum.photos/1200/900?random=3",
+        "https://picsum.photos/1200/900?random=4",
+        "https://picsum.photos/1200/900?random=5",
+      ];
+
+      const imageIndex = index % imageUrls.length;
+
+      console.log(`🖼️ [图片检测] 发现图片文件: ${fileName}`, {
+        title,
+        chunkSource,
+        imageIndex,
+        thumbnailUrl: imageUrls[imageIndex],
+      });
+
+      imageFiles.push({
+        id: `detected_image_${index}`,
+        title: fileName.replace(/\.[^/.]+$/, ""), // 移除扩展名
+        thumbnail: imageUrls[imageIndex],
+        fullsize: fullsizeUrls[imageIndex],
+        alt: `检测到的图片: ${fileName}`,
+        source: source,
+      });
+    }
+  });
+
+  return imageFiles;
+}
+
 export default function ChatHistory({
   history = [],
   workspace,
@@ -398,6 +473,34 @@ function buildMessages({
         />
       );
     } else {
+      // 检测消息源中是否包含图片文件
+      const detectedImages =
+        props.role === "assistant" && props.sources
+          ? detectImagesInSources(props.sources)
+          : [];
+
+      console.log(`🔍 [消息处理] 检测图片结果:`, {
+        role: props.role,
+        hasSources: !!props.sources,
+        sourcesCount: props.sources?.length || 0,
+        detectedImagesCount: detectedImages.length,
+        sources: props.sources,
+        detectedImages,
+      });
+
+      // 如果检测到图片，先显示图片指南组件
+      if (detectedImages.length > 0) {
+        console.log(`✅ [图片显示] 将显示 ${detectedImages.length} 张图片`);
+        acc.push(
+          <ImageGuideMessage
+            key={`${props.uuid || index}-images`}
+            message={`根据您的问题，我找到了以下相关图片：`}
+            images={detectedImages}
+            title="相关图片资料"
+          />
+        );
+      }
+
       acc.push(
         <HistoricalMessage
           key={index}
