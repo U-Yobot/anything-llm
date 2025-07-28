@@ -80,7 +80,7 @@
  * @param {('pinecone' | 'chroma' | 'lancedb' | 'weaviate' | 'qdrant' | 'milvus' | 'zilliz' | 'astra') | null} getExactly - If provided, this will return an explit provider.
  * @returns { BaseVectorDatabaseProvider}
  */
-function getVectorDbClass (getExactly = null) {
+function getVectorDbClass(getExactly = null) {
   const vectorSelection = getExactly ?? process.env.VECTOR_DB ?? "lancedb";
   switch (vectorSelection) {
     case "pinecone":
@@ -120,7 +120,7 @@ function getVectorDbClass (getExactly = null) {
  * @param {{provider: string | null, model: string | null} | null} params - Initialize params for LLMs provider
  * @returns {BaseLLMProvider}
  */
-function getLLMProvider ({ provider = null, model = null } = {}) {
+function getLLMProvider({ provider = null, model = null } = {}) {
   const LLMSelection = provider ?? process.env.LLM_PROVIDER ?? "openai";
   const embedder = getEmbeddingEngineSelection();
 
@@ -217,7 +217,7 @@ function getLLMProvider ({ provider = null, model = null } = {}) {
  * Returns the EmbedderProvider by itself to whatever is currently in the system settings.
  * @returns {BaseEmbedderProvider}
  */
-function getEmbeddingEngineSelection () {
+function getEmbeddingEngineSelection() {
   const { NativeEmbedder } = require("../EmbeddingEngines/native");
   const engineSelection = process.env.EMBEDDING_ENGINE;
   switch (engineSelection) {
@@ -270,7 +270,7 @@ function getEmbeddingEngineSelection () {
  * @param {{provider: string | null} | null} params - Initialize params for LLMs provider
  * @returns {BaseLLMProviderClass}
  */
-function getLLMProviderClass ({ provider = null } = {}) {
+function getLLMProviderClass({ provider = null } = {}) {
   switch (provider) {
     case "openai":
       const { OpenAiLLM } = require("../AiProviders/openAi");
@@ -363,7 +363,7 @@ function getLLMProviderClass ({ provider = null } = {}) {
  * @param {{provider: string | null} | null} params - Initialize params for LLMs provider
  * @returns {string | null}
  */
-function getBaseLLMProviderModel ({ provider = null } = {}) {
+function getBaseLLMProviderModel({ provider = null } = {}) {
   switch (provider) {
     case "openai":
       return process.env.OPEN_MODEL_PREF;
@@ -427,7 +427,7 @@ function getBaseLLMProviderModel ({ provider = null } = {}) {
 // Some models have lower restrictions on chars that can be encoded in a single pass
 // and by default we assume it can handle 1,000 chars, but some models use work with smaller
 // chars so here we can override that value when embedding information.
-function maximumChunkLength () {
+function maximumChunkLength() {
   if (
     !!process.env.EMBEDDING_MODEL_MAX_CHUNK_LENGTH &&
     !isNaN(process.env.EMBEDDING_MODEL_MAX_CHUNK_LENGTH) &&
@@ -438,7 +438,27 @@ function maximumChunkLength () {
   return 1_000;
 }
 
-function toChunks (arr, size) {
+/**
+ * Returns the EmbeddingRerankerProvider based on system settings.
+ * @returns {BaseEmbeddingRerankerProvider}
+ */
+function getEmbeddingRerankerClass() {
+  const { NativeEmbeddingReranker } = require("../EmbeddingRerankers/native");
+  const rerankerSelection = process.env.RERANKER_PROVIDER ?? "native";
+
+  switch (rerankerSelection) {
+    case "ollama":
+      const {
+        OllamaEmbeddingReranker,
+      } = require("../EmbeddingRerankers/ollama");
+      return new OllamaEmbeddingReranker();
+    case "native":
+    default:
+      return new NativeEmbeddingReranker();
+  }
+}
+
+function toChunks(arr, size) {
   return Array.from({ length: Math.ceil(arr.length / size) }, (_v, i) =>
     arr.slice(i * size, i * size + size)
   );
@@ -446,6 +466,7 @@ function toChunks (arr, size) {
 
 module.exports = {
   getEmbeddingEngineSelection,
+  getEmbeddingRerankerClass,
   maximumChunkLength,
   getVectorDbClass,
   getLLMProviderClass,

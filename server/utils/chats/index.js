@@ -92,8 +92,24 @@ async function chatPrompt(workspace, user = null) {
   const basePrompt =
     workspace?.openAiPrompt ??
     "Given the following conversation, relevant context, and a follow up question, reply with an answer to the current question the user is asking. Return only your response to the question given the above information following the users instructions as needed.";
+
+  // 添加文件格式保持指令
+  const fileFormatInstruction = `
+
+IMPORTANT FILE REFERENCE INSTRUCTIONS:
+When referencing image files in your response, you MUST use the exact format: [!filename.extension]
+When referencing video files in your response, you MUST use the exact format: [@filename.extension]
+
+Examples:
+- For image files: [!步骤1.jpg], [!界面截图.png], [!操作流程.jpeg]
+- For video files: [@演示视频.mp4], [@教程.avi], [@操作指南.mov]
+
+DO NOT modify these file reference formats or convert them to plain text. Keep the brackets and special characters exactly as shown. This formatting is required for the system to properly detect and display the media files to users.`;
+
+  const enhancedPrompt = basePrompt + fileFormatInstruction;
+
   return await SystemPromptVariables.expandSystemPromptVariables(
-    basePrompt,
+    enhancedPrompt,
     user?.id
   );
 }

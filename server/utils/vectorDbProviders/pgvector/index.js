@@ -1,5 +1,9 @@
 const pgsql = require("pg");
-const { toChunks, getEmbeddingEngineSelection } = require("../../helpers");
+const {
+  toChunks,
+  getEmbeddingEngineSelection,
+  getEmbeddingRerankerClass,
+} = require("../../helpers");
 const { TextSplitter } = require("../../TextSplitter");
 const { v4: uuidv4 } = require("uuid");
 const { sourceIdentifier } = require("../../chats");
@@ -652,6 +656,7 @@ const PGVector = {
     similarityThreshold = 0.25,
     topN = 4,
     filterIdentifiers = [],
+    rerank = false,
   }) {
     let connection = null;
     if (!namespace || !input || !LLMConnector)
@@ -672,14 +677,24 @@ const PGVector = {
       }
 
       const queryVector = await LLMConnector.embedTextInput(input);
-      const result = await this.similarityResponse({
-        client: connection,
-        namespace,
-        queryVector,
-        similarityThreshold,
-        topN,
-        filterIdentifiers,
-      });
+      const result = rerank
+        ? await this.rerankedSimilarityResponse({
+            client: connection,
+            namespace,
+            query: input,
+            queryVector,
+            similarityThreshold,
+            topN,
+            filterIdentifiers,
+          })
+        : await this.similarityResponse({
+            client: connection,
+            namespace,
+            queryVector,
+            similarityThreshold,
+            topN,
+            filterIdentifiers,
+          });
 
       const { contextTexts, sourceDocuments } = result;
       const sources = sourceDocuments.map((metadata, i) => {
@@ -700,6 +715,110 @@ const PGVector = {
     } finally {
       if (connection) await connection.end();
     }
+  },
+
+  /**
+   * Performs a SimilaritySearch + Reranking on a namespace.
+   * @param {Object} params - The parameters for the rerankedSimilarityResponse.
+   * @param {Object} params.client - The vectorDB client.
+   * @param {string} params.namespace - The namespace to search in.
+   * @param {string} params.query - The query to search for (plain text).
+   * @param {number[]} params.queryVector - The vector of the query.
+   * @param {number} params.similarityThreshold - The threshold for similarity.
+   * @param {number} params.topN - the number of results to return from this process.
+   * @param {string[]} params.filterIdentifiers - The identifiers of the documents to filter out.
+   * @returns
+   */
+  rerankedSimilarityResponse: async function ({
+    client,
+    namespace,
+    query,
+    queryVector,
+    topN = 4,
+    similarityThreshold = 0.25,
+    filterIdentifiers = [],
+  }) {
+    const reranker = getEmbeddingRerankerClass();
+    const result = {
+      contextTexts: [],
+      sourceDocuments: [],
+      scores: [],
+    };
+
+    /**
+     * For reranking, we want to work with a larger number of results than the topN.
+     * This is because the reranker can only rerank the results it is given and we dont auto-expand the results.
+     * We want to give the reranker a larger number of results to work with.
+     *
+     * However, we cannot make this boundless as reranking is expensive and time consuming.
+     * So we limit the number of results to a maximum of 50 and a minimum of 10.
+     * This is a good balance between the number of results to rerank and the cost of reranking
+     * and ensures workspaces with 10K embeddings will still rerank within a reasonable timeframe on base level hardware.
+     */
+    const searchLimit = Math.max(
+      10,
+      Math.min(50, topN * 3) // 3x the topN, but capped at 50
+    );
+
+    // Get initial vector search results with expanded limit
+    const initialResult = await this.similarityResponse({
+      client,
+      namespace,
+      queryVector,
+      similarityThreshold: 0, // Use lower threshold for initial search
+      topN: searchLimit,
+      filterIdentifiers,
+    });
+
+    if (initialResult.contextTexts.length === 0) {
+      return result;
+    }
+
+    // Prepare documents for reranking
+    const vectorSearchResults = initialResult.contextTexts.map((text, i) => ({
+      text,
+      ...initialResult.sourceDocuments[i],
+    }));
+
+    try {
+      const rerankResults = await reranker.rerank(query, vectorSearchResults, {
+        topK: topN,
+      });
+
+      rerankResults.forEach((item) => {
+        // Apply similarity threshold to reranked results
+        const score = item?.rerank_score || 0;
+        if (score < similarityThreshold) return;
+
+        const { text, ...metadata } = item;
+        if (filterIdentifiers.includes(sourceIdentifier(metadata))) {
+          console.log(
+            "PGVector: A source was filtered from context as its parent document is pinned."
+          );
+          return;
+        }
+
+        result.contextTexts.push(text);
+        result.sourceDocuments.push({
+          ...metadata,
+          score,
+        });
+        result.scores.push(score);
+      });
+    } catch (e) {
+      console.error("PGVector::rerankedSimilarityResponse", e.message);
+      // Fallback to original results if reranking fails
+      initialResult.contextTexts.slice(0, topN).forEach((text, i) => {
+        const metadata = initialResult.sourceDocuments[i];
+        if (filterIdentifiers.includes(sourceIdentifier(metadata))) return;
+
+        result.contextTexts.push(text);
+        result.sourceDocuments.push(metadata);
+        result.scores.push(metadata.score || 0);
+      });
+    }
+
+    return result;
   },
 
   "namespace-stats": async function (reqBody = {}) {

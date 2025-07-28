@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片检测测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-case {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-input {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-family: monospace;
+            border-left: 4px solid #007bff;
+        }
+        .test-result {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border-left: 4px solid #28a745;
+        }
+        .test-result.fail {
+            background: #f8e8e8;
+            border-left-color: #dc3545;
+        }
+        .detected-files {
+            margin: 10px 0;
+        }
+        .file-item {
+            background: #e3f2fd;
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 4px;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px 10px 0;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .console-output {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🖼️ 图片检测功能测试</h1>
+    <p>测试修改后的图片检测逻辑是否能正确识别不同格式的文件名引用。</p>
+
+    <div class="test-case">
+        <h3>测试用例 1: 标记格式（原有格式）</h3>
+        <div class="test-input">
+            消息内容: "请查看这些图片：[!步骤1.jpg]和[!步骤2.png]，还有这个视频：[@演示.mp4]"
+        </div>
+        <button onclick="testCase1()">运行测试</button>
+        <div id="result1" class="test-result" style="display:none;"></div>
+    </div>
+
+    <div class="test-case">
+        <h3>测试用例 2: 直接文件名格式（你的情况）</h3>
+        <div class="test-input">
+            消息内容: "管理员会直接向指定车主发放优惠券（具体操作可参考步骤1.jpg和步骤2.png）"
+        </div>
+        <button onclick="testCase2()">运行测试</button>
+        <div id="result2" class="test-result" style="display:none;"></div>
+    </div>
+
+    <div class="test-case">
+        <h3>测试用例 3: 混合格式</h3>
+        <div class="test-input">
+            消息内容: "查看[!界面截图.png]，然后参考操作流程.jpg和演示视频.mp4进行操作"
+        </div>
+        <button onclick="testCase3()">运行测试</button>
+        <div id="result3" class="test-result" style="display:none;"></div>
+    </div>
+
+    <div class="test-case">
+        <h3>测试用例 4: 中文文件名</h3>
+        <div class="test-input">
+            消息内容: "请参考登录界面.png、用户管理.jpg和系统演示.mp4"
+        </div>
+        <button onclick="testCase4()">运行测试</button>
+        <div id="result4" class="test-result" style="display:none;"></div>
+    </div>
+
+    <div class="console-output" id="console-output">
+        <div>控制台输出将显示在这里...</div>
+    </div>
+
+    <script>
+        // 模拟控制台输出
+        const originalConsoleLog = console.log;
+        console.log = function(...args) {
+            originalConsoleLog.apply(console, args);
+            const output = document.getElementById('console-output');
+            const div = document.createElement('div');
+            div.textContent = args.join(' ');
+            output.appendChild(div);
+            output.scrollTop = output.scrollHeight;
+        };
+
+        // 复制修改后的检测函数
+        function detectImagesInResponse(message = "", sources = []) {
+            console.log(`🔍 [图片检测开始] 消息内容:`, message.substring(0, 200) + "...");
+            console.log(`🔍 [图片检测开始] Sources数量:`, sources.length);
+
+            const imageFiles = [];
+            const imageSourceMap = new Map();
+
+            // 处理sources中的图片文件
+            sources.forEach((source, index) => {
+                const title = source.title || "";
+                const chunkSource = source.chunkSource || "";
+                const text = source.text || "";
+
+                const IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".svg", ".tiff", ".ico"];
+                const hasImageExtension = IMAGE_EXTENSIONS.some(ext => 
+                    title.toLowerCase().includes(ext) || 
+                    chunkSource.toLowerCase().includes(ext) ||
+                    text.toLowerCase().includes(ext)
+                );
+
+                if (hasImageExtension) {
+                    const fileName = title || chunkSource.split("/").pop() || `image_${index + 1}`;
+                    const cleanFileName = fileName.replace(/\.[^/.]+$/, "");
+
+                    console.log(`🖼️ [发现图片文件]`, {
+                        fileName,
+                        cleanFileName,
+                        title,
+                        chunkSource,
+                    });
+
+                    imageSourceMap.set(cleanFileName.toLowerCase(), {
+                        source,
+                        index,
+                        fileName,
+                    });
+                }
+            });
+
+            console.log(`🗺️ [图片映射表] 共找到 ${imageSourceMap.size} 个图片文件:`, Array.from(imageSourceMap.keys()));
+
+            // 检查LLM响应中是否明确提到了这些图片文件名
+            const mentionedImages = [];
+            imageSourceMap.forEach((imageInfo, cleanFileName) => {
+                const messageLower = message.toLowerCase();
+                const fileNameLower = imageInfo.fileName.toLowerCase();
+
+                if (
+                    messageLower.includes(fileNameLower) ||
+                    messageLower.includes(cleanFileName) ||
+                    messageLower.includes(imageInfo.source.title?.toLowerCase() || "")
+                ) {
+                    console.log(`✅ [图片匹配成功] LLM回复中提到了图片: ${imageInfo.fileName}`);
+                    mentionedImages.push(imageInfo);
+                } else {
+                    console.log(`❌ [图片匹配失败] LLM回复中未提到图片: ${imageInfo.fileName}`);
+                }
+            });
+
+            console.log(`📊 [匹配结果] 共匹配到 ${mentionedImages.length} 个图片`);
+
+            // 如果没有从sources中找到图片，但消息中包含图片文件名，则创建虚拟图片
+            let imagesToShow = mentionedImages;
+            if (imagesToShow.length === 0) {
+                console.log(`🔍 [备用检测] 在消息中直接查找图片文件名...`);
+
+                // 方法1: 使用标记格式 [!图片名称] 来精确匹配图片文件名
+                const imageRegexMarked = /\[!([\u4e00-\u9fa5a-zA-Z0-9_.-]+\.(png|jpg|jpeg|gif|bmp|webp|svg|tiff|ico))\]/gi;
+                const foundMarkedImages = message.match(imageRegexMarked);
+
+                // 方法2: 直接匹配文件名（更宽松的匹配）
+                const imageRegexDirect = /([\u4e00-\u9fa5a-zA-Z0-9_.-]+\.(png|jpg|jpeg|gif|bmp|webp|svg|tiff|ico))/gi;
+                const foundDirectImages = message.match(imageRegexDirect);
+
+                let foundImages = [];
+
+                // 优先使用标记格式的结果
+                if (foundMarkedImages && foundMarkedImages.length > 0) {
+                    console.log(`🖼️ [标记格式匹配] 在消息中找到图片文件:`, foundMarkedImages);
+                    foundImages = foundMarkedImages;
+                } else if (foundDirectImages && foundDirectImages.length > 0) {
+                    console.log(`🖼️ [直接格式匹配] 在消息中找到图片文件:`, foundDirectImages);
+                    foundImages = foundDirectImages;
+                }
+
+                if (foundImages && foundImages.length > 0) {
+                    // 去重并清理文件名
+                    const uniqueImages = [...new Set(foundImages)];
+
+                    uniqueImages.forEach((fileName, index) => {
+                        let extractedFileName;
+
+                        // 检查是否是标记格式
+                        if (fileName.startsWith('[!') && fileName.endsWith(']')) {
+                            // 从 [!filename] 格式中提取文件名
+                            const filenameMatch = fileName.match(/\[!(.*?)\]/);
+                            extractedFileName = filenameMatch ? filenameMatch[1] : fileName;
+                        } else {
+                            // 直接使用文件名
+                            extractedFileName = fileName;
+                        }
+
+                        // 移除文件扩展名用于显示
+                        const cleanFileName = extractedFileName.replace(/\.[^/.]+$/, "");
+
+                        console.log(`📝 [文件名处理] 原始: "${fileName}" -> 提取: "${extractedFileName}" -> 清理: "${cleanFileName}"`);
+
+                        imagesToShow.push({
+                            source: {
+                                title: cleanFileName,
+                                chunkSource: `virtual://${extractedFileName}`,
+                            },
+                            index: index,
+                            fileName: extractedFileName,
+                        });
+                    });
+                }
+            }
+
+            // 生成图片对象
+            imagesToShow.forEach((imageInfo) => {
+                const imageIndex = imageInfo.index % 5;
+                const cleanFileName = imageInfo.fileName.replace(/\.[^/.]+$/, "");
+
+                console.log(`🖼️ [智能图片检测] LLM提到了图片: ${imageInfo.fileName}`, {
+                    message: message.substring(0, 100) + "...",
+                    fileName: imageInfo.fileName,
+                    imageIndex,
+                });
+
+                imageFiles.push({
+                    id: `llm_mentioned_image_${imageInfo.index}`,
+                    title: cleanFileName,
+                    thumbnail: `https://picsum.photos/400/300?random=${imageIndex}`,
+                    fullsize: `https://picsum.photos/800/600?random=${imageIndex}`,
+                    alt: `相关图片: ${imageInfo.fileName}`,
+                    source: imageInfo.source,
+                });
+            });
+
+            // 检测视频文件
+            console.log(`🎬 [视频检测] 开始在消息中查找视频文件...`);
+
+            // 方法1: 使用标记格式 [@视频名称] 来精确匹配视频文件名
+            const videoRegexMarked = /\[@([\u4e00-\u9fa5a-zA-Z0-9_.-]+\.(mp4|avi|mov|wmv|flv|webm|mkv|m4v|3gp|ogv))\]/gi;
+            const foundMarkedVideos = message.match(videoRegexMarked);
+
+            // 方法2: 直接匹配视频文件名（更宽松的匹配）
+            const videoRegexDirect = /([\u4e00-\u9fa5a-zA-Z0-9_.-]+\.(mp4|avi|mov|wmv|flv|webm|mkv|m4v|3gp|ogv))/gi;
+            const foundDirectVideos = message.match(videoRegexDirect);
+
+            let foundVideos = [];
+            let extractedFilenames = [];
+
+            // 优先使用标记格式的结果
+            if (foundMarkedVideos && foundMarkedVideos.length > 0) {
+                console.log(`🎬 [标记格式匹配] 在消息中找到视频文件:`, foundMarkedVideos);
+                foundVideos = foundMarkedVideos;
+                extractedFilenames = foundVideos.map((match) => {
+                    const filenameMatch = match.match(/\[@(.*?)\]/);
+                    return filenameMatch ? filenameMatch[1] : match;
+                });
+            } else if (foundDirectVideos && foundDirectVideos.length > 0) {
+                console.log(`🎬 [直接格式匹配] 在消息中找到视频文件:`, foundDirectVideos);
+                foundVideos = foundDirectVideos;
+                extractedFilenames = foundVideos;
+            }
+
+            if (foundVideos && foundVideos.length > 0) {
+                console.log(`📝 [提取文件名] 提取的视频文件名:`, extractedFilenames);
+
+                const uniqueVideos = [...new Set(extractedFilenames)];
+
+                uniqueVideos.forEach((fileName, index) => {
+                    const cleanFileName = fileName.replace(/\.[^/.]+$/, "");
+
+                    console.log(`🎬 [智能视频检测] LLM提到了视频: ${fileName}`, {
+                        message: message.substring(0, 100) + "...",
+                        fileName: fileName,
+                    });
+
+                    imageFiles.push({
+                        id: `llm_mentioned_video_${index}`,
+                        title: cleanFileName,
+                        filename: fileName,
+                        src: `https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4`,
+                        alt: `相关视频: ${fileName}`,
+                        type: "video",
+                        source: {
+                            title: cleanFileName,
+                            chunkSource: `virtual://${fileName}`,
+                        },
+                    });
+                });
+            }
+
+            console.log(`🎯 [detectImagesInResponse] 最终返回图片+视频数量:`, imageFiles.length);
+            console.log(`📋 [detectImagesInResponse] 返回的对象:`, imageFiles);
+            return imageFiles;
+        }
+
+        function runTest(caseNumber, message, sources = []) {
+            const resultDiv = document.getElementById(`result${caseNumber}`);
+            resultDiv.style.display = 'block';
+            
+            // 清空控制台
+            document.getElementById('console-output').innerHTML = '<div>--- 测试用例 ' + caseNumber + ' 开始 ---</div>';
+            
+            console.log(`\n=== 测试用例 ${caseNumber} ===`);
+            console.log(`输入消息: "${message}"`);
+            
+            const result = detectImagesInResponse(message, sources);
+            
+            let html = '<h4>检测结果:</h4>';
+            if (result.length > 0) {
+                html += '<div class="detected-files">';
+                result.forEach(file => {
+                    const type = file.type === 'video' ? '🎬 视频' : '🖼️ 图片';
+                    html += `<div class="file-item">${type}: ${file.title} (${file.filename || file.title})</div>`;
+                });
+                html += '</div>';
+                html += `<p><strong>✅ 成功检测到 ${result.length} 个媒体文件</strong></p>`;
+                resultDiv.className = 'test-result';
+            } else {
+                html += '<p><strong>❌ 未检测到任何媒体文件</strong></p>';
+                resultDiv.className = 'test-result fail';
+            }
+            
+            resultDiv.innerHTML = html;
+            console.log(`=== 测试用例 ${caseNumber} 结束 ===\n`);
+        }
+
+        function testCase1() {
+            runTest(1, "请查看这些图片：[!步骤1.jpg]和[!步骤2.png]，还有这个视频：[@演示.mp4]");
+        }
+
+        function testCase2() {
+            runTest(2, "管理员会直接向指定车主发放优惠券（具体操作可参考步骤1.jpg和步骤2.png）");
+        }
+
+        function testCase3() {
+            runTest(3, "查看[!界面截图.png]，然后参考操作流程.jpg和演示视频.mp4进行操作");
+        }
+
+        function testCase4() {
+            runTest(4, "请参考登录界面.png、用户管理.jpg和系统演示.mp4");
+        }
+    </script>
+</body>
+</html>

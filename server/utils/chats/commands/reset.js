@@ -19,7 +19,7 @@ async function resetMemory(
   return {
     uuid: msgUUID,
     type: "textResponse",
-    textResponse: "Workspace chat memory was reset!",
+    textResponse: "对话窗体已重置",
     sources: [],
     close: true,
     error: false,

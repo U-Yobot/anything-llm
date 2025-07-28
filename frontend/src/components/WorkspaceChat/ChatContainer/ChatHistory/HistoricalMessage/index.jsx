@@ -215,6 +215,35 @@ function ChatAttachments({ attachments = [] }) {
   );
 }
 
+/**
+ * 将文件格式标记转换为用户友好的显示格式
+ * @param {string} message - 原始消息
+ * @returns {string} - 转换后的消息
+ */
+function convertFileMarkersToFriendlyFormat(message) {
+  if (!message) return message;
+
+  // 转换图片格式：[!filename.jpg] -> filename.jpg
+  let convertedMessage = message.replace(
+    /\[!([\u4e00-\u9fa5a-zA-Z0-9_.-]+\.(png|jpg|jpeg|gif|bmp|webp|svg|tiff|ico))\]/gi,
+    (match, filename) => {
+      console.log(`🖼️ [格式转换] 图片标记 "${match}" -> "${filename}"`);
+      return `**${filename}**`; // 使用粗体显示文件名
+    }
+  );
+
+  // 转换视频格式：[@filename.mp4] -> filename.mp4
+  convertedMessage = convertedMessage.replace(
+    /\[@([\u4e00-\u9fa5a-zA-Z0-9_.-]+\.(mp4|avi|mov|wmv|flv|webm|mkv|m4v|3gp|ogv))\]/gi,
+    (match, filename) => {
+      console.log(`🎬 [格式转换] 视频标记 "${match}" -> "${filename}"`);
+      return `**${filename}**`; // 使用粗体显示文件名
+    }
+  );
+
+  return convertedMessage;
+}
+
 const RenderChatContent = memo(
   ({ role, message, expanded = false, detectedImages = [] }) => {
     // If the message is not from the assistant, we can render it directly
@@ -251,6 +280,9 @@ const RenderChatContent = memo(
       msgToRender = splitMessage[1];
     }
 
+    // 在渲染前转换文件格式标记为用户友好格式
+    const friendlyMessage = convertFileMarkersToFriendlyFormat(msgToRender);
+
     return (
       <>
         {thoughtChain && (
@@ -259,7 +291,7 @@ const RenderChatContent = memo(
         <span
           className="flex flex-col gap-y-1"
           dangerouslySetInnerHTML={{
-            __html: DOMPurify.sanitize(renderMarkdown(msgToRender)),
+            __html: DOMPurify.sanitize(renderMarkdown(friendlyMessage)),
           }}
         />
         {/* 如果有检测到的媒体文件，在消息末尾显示 */}

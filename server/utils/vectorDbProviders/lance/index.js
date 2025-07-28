@@ -1,11 +1,14 @@
 const lancedb = require("@lancedb/lancedb");
-const { toChunks, getEmbeddingEngineSelection } = require("../../helpers");
+const {
+  toChunks,
+  getEmbeddingEngineSelection,
+  getEmbeddingRerankerClass,
+} = require("../../helpers");
 const { TextSplitter } = require("../../TextSplitter");
 const { SystemSettings } = require("../../../models/systemSettings");
 const { storeVectorResult, cachedVectorInformation } = require("../../files");
 const { v4: uuidv4 } = require("uuid");
 const { sourceIdentifier } = require("../../chats");
-const { NativeEmbeddingReranker } = require("../../EmbeddingRerankers/native");
 
 /**
  * LancedDB Client connection object
@@ -79,7 +82,7 @@ const LanceDb = {
     similarityThreshold = 0.25,
     filterIdentifiers = [],
   }) {
-    const reranker = new NativeEmbeddingReranker();
+    const reranker = getEmbeddingRerankerClass();
     const collection = await client.openTable(namespace);
     const totalEmbeddings = await this.namespaceCount(namespace);
     const result = {
